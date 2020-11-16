@@ -1,6 +1,8 @@
 # Data Visualisation
 
-## Downloading the Dataset
+## Instructions
+
+### Downloading the Dataset
 
 As the dataset is provided by an external website, we decided to use a script to download, unzip, parse, and merge the different data files into a single CSV file. To run this script, one should first install the required Python packages:
 
@@ -15,3 +17,7 @@ python3 scripts/download.py
 ```
 
 The dataset can be found at: `data/dataset.csv`.
+
+### Viewing the Visualisations
+
+The visualisations were created using D3. Make sure you have downloaded the dataset and then open any of the HTML files in the visualisations directory to view the data.
