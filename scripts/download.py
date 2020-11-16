@@ -79,7 +79,7 @@ if not parsed.exists():
 
         # Prepare regular expressions
         line_pattern = re.compile("@@(\\d+)\\s+(.*)", re.DOTALL)
-        token_pattern = re.compile("\\w+")
+        token_pattern = re.compile("^\\w+$")
 
         # Parse data
         rows = []
@@ -101,10 +101,31 @@ if not parsed.exists():
         data_frame.to_csv(parsed / "texts.csv", index=False)
 
 # Merge CSV files
-dataset = data / "dataset.csv"
-if not dataset.exists():
+merged_path = data / "dataset.csv"
+if not merged_path.exists():
+    print("Merging CSV files.")
+
     sources = pd.read_csv(parsed / "sources.csv")
     texts = pd.read_csv(parsed / "texts.csv")
+
     merged = sources.merge(texts)
     merged = merged.drop("text_id", axis=1)
-    merged.to_csv(dataset, index=False)
+    merged.to_csv(merged_path, index=False)
+
+# Generate yearly-word-count CSV file
+ywc_path = data / "yearly_word_count.csv"
+if not ywc_path.exists():
+    print("Generating yearly word-count CSV file.")
+
+    merged = pd.read_csv(merged_path)
+
+    occurrences = []
+    for (year, text) in zip(merged["year"], merged["text"]):
+        words = text.split(' ')
+        for word in words:
+            occurrences.append([year, word])
+    occurrences = pd.DataFrame(occurrences, columns=["year", "word"])
+
+    ywc = occurrences.groupby(occurrences.columns.tolist(), as_index=False).size()
+    ywc.rename(columns={"size": "count"}, inplace=True)
+    ywc.to_csv(ywc_path, index=False)
