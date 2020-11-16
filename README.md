@@ -1,4 +1,4 @@
-# Data-Visualisation
+# Data Visualisation
 
 ## Downloading the Dataset
 
