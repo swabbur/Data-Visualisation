@@ -1,5 +1,15 @@
 # Data Visualisation
 
+## Alternative Datasets
+
+### World
+- ![Development](http://wdi.worldbank.org/tables)
+- ![Boundaries](https://datacatalog.worldbank.org/dataset/world-bank-official-boundaries)
+- ![Elevation](https://datacatalog.worldbank.org/dataset/world-terrain-elevation-above-sea-level-ele-gis-data-global-solar-atlas)
+
+### Other
+- ![Pokemon](https://pokeapi.co/docs/v2)
+
 ## Instructions
 
 ### Downloading the Dataset
