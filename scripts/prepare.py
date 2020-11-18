@@ -123,6 +123,8 @@ def to_occurrences(database: pandas.DataFrame, lexicon: pandas.DataFrame, source
 def generate_yearly_word_count(source_directory: Path, target_path: Path):
     """Generate a yearly-word-count dataset based on the movies and television datasets."""
 
+    print(f"Generating yearly-word-count dataset at {target_path}.")
+
     # Find occurrences in movies
     movies_db = pandas.read_csv(source_directory / "movies_db.csv")
     movies_lexicon = pandas.read_csv(source_directory / "movies_lexicon.csv")
