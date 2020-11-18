@@ -1,3 +1,4 @@
+import nltk
 import pandas
 import requests
 import shutil
@@ -56,6 +57,30 @@ def convert_all(source_directory: Path, target_directory: Path):
             data_frame.to_csv(target_path, encoding="utf-8", index=False)
 
 
+def clean_database(data_frame: pandas.DataFrame):
+    """Clean a database data frame by naming and re-ordering the columns."""
+    data_frame.columns = ["text_id", "id", "word_id"]
+    return data_frame[["text_id", "word_id"]]
+
+
+def clean_lexicon(data_frame: pandas.DataFrame):
+    """Clean a lexicon data frame by dropping unnecessary rows and columns, and renaming those that remain."""
+    data_frame.drop(index=0, inplace=True)
+    data_frame.drop(columns=["wordCS"], inplace=True)
+    data_frame.rename(columns={"wordID": "word_id", "date": "year"}, inplace=True)
+    return data_frame
+
+
+def clean_sources(data_frame: pandas.DataFrame):
+    """Clean a sources data frame by dropping unnecessary rows and columns, and renaming those that remain."""
+    data_frame.drop(index=0, inplace=True)
+    data_frame.drop(columns=["fileID", "language(s)", "IMDB"], inplace=True)
+    if "seriesID" in data_frame.columns:
+        data_frame.drop(columns=["seriesID"], inplace=True)
+    data_frame.rename(columns={"textID": "text_id", "#words": "word_count", "date": "year"}, inplace=True)
+    return data_frame
+
+
 def clean_all(source_directory: Path, target_directory: Path, clean_functions: dict):
     """Clean the files in the source directory and store their cleaned versions in the target directory. Simply copies
     the file when no associated cleaning function is available."""
@@ -73,28 +98,58 @@ def clean_all(source_directory: Path, target_directory: Path, clean_functions: d
                 shutil.copy(source_path, target_path)
 
 
-def clean_database(data_frame: pandas.DataFrame):
-    """Clean a database data frame by naming and re-ordering the columns."""
-    data_frame.columns = ["text_id", "id", "word_id"]
-    return data_frame[["text_id", "word_id"]]
+def to_occurrences(database: pandas.DataFrame, lexicon: pandas.DataFrame, sources: pandas.DataFrame, name: str):
+    """Collect year-word pairs from the combination of data frames"""
+
+    # Select required columns
+    trimmed_lexicon = lexicon[["word_id", "word"]]
+    trimmed_sources = sources[["text_id", "year"]]
+
+    # Remove invalid/unusual words
+    nltk.download('words', quiet=True)
+    vocabulary = set(word.lower() for word in nltk.corpus.words.words())
+    trimmed_lexicon = trimmed_lexicon[trimmed_lexicon["word"].str.lower().isin(vocabulary)]
+
+    # Merge data frames
+    occurrences = database\
+        .merge(trimmed_lexicon, on="word_id")\
+        .merge(trimmed_sources, on="text_id")\
+        .drop(columns=["word_id", "text_id"])
+    occurrences["source"] = name
+
+    return occurrences
 
 
-def clean_lexicon(data_frame: pandas.DataFrame):
-    """Clean a lexicon data frame by dropping unnecessary rows and columns, and renaming those that remain."""
-    data_frame.drop(index=0, inplace=True)
-    data_frame.drop(columns=["wordCS"], inplace=True)
-    data_frame.rename(columns={"wordID": "word_id"}, inplace=True)
-    return data_frame
+def generate_yearly_word_count(source_directory: Path, target_path: Path):
+    """Generate a yearly-word-count dataset based on the movies and television datasets."""
+
+    # Find occurrences in movies
+    movies_db = pandas.read_csv(source_directory / "movies_db.csv")
+    movies_lexicon = pandas.read_csv(source_directory / "movies_lexicon.csv")
+    movies_sources = pandas.read_csv(source_directory / "movies_sources.csv")
+    movies_occurrences = to_occurrences(movies_db, movies_lexicon, movies_sources, "movie")
+
+    # Find occurrences in television series
+    tv_db = pandas.read_csv(source_directory / "tv_db.csv")
+    tv_lexicon = pandas.read_csv(source_directory / "tv_lexicon.csv")
+    tv_sources = pandas.read_csv(source_directory / "tv_sources.csv")
+    tv_occurrences = to_occurrences(tv_db, tv_lexicon, tv_sources, "tv")
+
+    # Merge occurrences
+    occurrences = pandas.concat([movies_occurrences, tv_occurrences])
+
+    # Count yearly occurrences
+    yearly_word_count = occurrences.groupby(occurrences.columns.tolist(), as_index=False).size()
+    yearly_word_count.rename(columns={"size": "count"}, inplace=True)
+    yearly_word_count.to_csv(target_path, index=False)
 
 
-def clean_sources(data_frame: pandas.DataFrame):
-    """Clean a sources data frame by dropping unnecessary rows and columns, and renaming those that remain."""
-    data_frame.drop(index=0, inplace=True)
-    data_frame.drop(columns=["fileID", "language(s)", "IMDB"], inplace=True)
-    if "seriesID" in data_frame.columns:
-        data_frame.drop(columns=["seriesID"], inplace=True)
-    data_frame.rename(columns={"textID": "text_id", "#words": "word_count"}, inplace=True)
-    return data_frame
+def preprocess_all(source_directory: Path, target_directory: Path, preprocessing_tasks: dict):
+    """Preprocess data files by generating proper datasets from them."""
+    for (name, function) in preprocessing_tasks.items():
+        target_path = target_directory / name
+        if not target_path.exists():
+            function(source_directory, target_path)
 
 
 def main():
@@ -138,6 +193,14 @@ def main():
     clean_dir = data_dir / "cleaned"
     clean_dir.mkdir(parents=True, exist_ok=True)
     clean_all(convert_dir, clean_dir, clean_functions)
+
+    preprocessing_tasks = {
+        "yearly_word_count.csv": generate_yearly_word_count
+    }
+
+    preprocess_dir = data_dir / "preprocessed"
+    preprocess_dir.mkdir(parents=True, exist_ok=True)
+    preprocess_all(clean_dir, preprocess_dir, preprocessing_tasks)
 
 
 if __name__ == '__main__':
