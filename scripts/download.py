@@ -16,7 +16,7 @@ urls = [
 ]
 
 # Download zip files
-downloads = data / "downloads"
+downloads = data / "downloaded"
 if not downloads.exists():
     downloads.mkdir()
 
