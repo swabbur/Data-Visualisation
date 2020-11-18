@@ -1,32 +1,18 @@
 # Data Visualisation
 
-## Alternative Datasets
-
-### World
-- ![Development](http://wdi.worldbank.org/tables)
-- ![Boundaries](https://datacatalog.worldbank.org/dataset/world-bank-official-boundaries)
-- ![Elevation](https://datacatalog.worldbank.org/dataset/world-terrain-elevation-above-sea-level-ele-gis-data-global-solar-atlas)
-
-### Other
-- ![Pokemon](https://pokeapi.co/docs/v2)
-
 ## Instructions
 
 ### Downloading the Dataset
 
-As the dataset is provided by an external website, we decided to use a script to download, unzip, parse, and merge the different data files into a single CSV file. To run this script, one should first install the required Python packages:
+As the dataset is stored externally, we decided to use a script to download, unpack, convert, and clean the data files. To run this script, one should install Python3, gather the the required Python packages, and execute it. The exact commands may differ per platform, the following should work on any Linux system running the APT package manager.
 
 ```
+sudo apt install pip3 python3
 pip3 install -r requirements.txt
-```
-
-Then, the dataset can be downloaded:
-
-```bash
 python3 scripts/download.py
 ```
 
-The dataset can be found at: `data/dataset.csv`.
+All data, including the intermediary formats, are stored in a newly generated `data` folder.
 
 ### Viewing the Visualisations
 
