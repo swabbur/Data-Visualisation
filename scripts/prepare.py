@@ -172,7 +172,6 @@ def generate_yearly_word_counts(source_directory: Path, target_directory: Path):
 
     # Store separate files
     target_directory.mkdir(parents=True, exist_ok=True)
-    yearly_word_count.to_csv(str(target_directory) + ".csv", index=False)
     for (name, data_frame) in yearly_word_count.groupby("word"):
         target_path = target_directory / (name + ".csv")
         data_frame.to_csv(target_path, index=False)
