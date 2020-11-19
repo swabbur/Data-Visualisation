@@ -2,6 +2,7 @@ import nltk
 import pandas
 import requests
 import shutil
+import re
 
 from chardet.universaldetector import UniversalDetector
 from pathlib import Path
@@ -67,7 +68,7 @@ def clean_lexicon(data_frame: pandas.DataFrame):
     """Clean a lexicon data frame by dropping unnecessary rows and columns, and renaming those that remain."""
     data_frame.drop(index=0, inplace=True)
     data_frame.drop(columns=["wordCS"], inplace=True)
-    data_frame.rename(columns={"wordID": "word_id", "date": "year"}, inplace=True)
+    data_frame.rename(columns={"wordID": "word_id", "date": "year", "Pos": "pos"}, inplace=True)
     return data_frame
 
 
@@ -101,29 +102,44 @@ def clean_all(source_directory: Path, target_directory: Path, clean_functions: d
 def to_occurrences(database: pandas.DataFrame, lexicon: pandas.DataFrame, sources: pandas.DataFrame, name: str):
     """Collect year-word pairs from the combination of data frames"""
 
-    # Select required columns
-    trimmed_lexicon = lexicon[["word_id", "word"]]
-    trimmed_sources = sources[["text_id", "year"]]
+    # Remove words other than adjectives (r), adverbs (j), nouns (n), and verbs (v).
+    # pos_pattern = re.compile("^[rjnv].*$")
+    # lexicon = lexicon[lexicon["pos"].str.match(pos_pattern) == True]
 
-    # Remove invalid/unusual words
-    nltk.download('words', quiet=True)
-    vocabulary = set(word.lower() for word in nltk.corpus.words.words())
-    trimmed_lexicon = trimmed_lexicon[trimmed_lexicon["word"].str.lower().isin(vocabulary)]
+    # Remove words other than nouns (n) and verbs (v).
+    pos_pattern = re.compile("^[nv].*$")
+    lexicon = lexicon[lexicon["pos"].str.match(pos_pattern) == True]
+
+    # Select required columns
+    lexicon = lexicon[["word_id", "lemma"]]
+    sources = sources[["text_id", "year"]]
+
+    # Rename "lemma" column to "word"
+    lexicon = lexicon.rename(columns={"lemma": "word"})
+
+    # Download word corpora
+    nltk.download("stopwords", quiet=True)
+    nltk.download("words", quiet=True)
+
+    # Remove stopwords and unusual words
+    stopwords = set(word.lower() for word in nltk.corpus.stopwords.words())
+    vocabulary = set(word.lower() for word in nltk.corpus.words.words() if word not in stopwords)
+    lexicon = lexicon[lexicon["word"].str.lower().isin(vocabulary)]
 
     # Merge data frames
     occurrences = database\
-        .merge(trimmed_lexicon, on="word_id")\
-        .merge(trimmed_sources, on="text_id")\
+        .merge(lexicon, on="word_id")\
+        .merge(sources, on="text_id")\
         .drop(columns=["word_id", "text_id"])
     occurrences["source"] = name
 
     return occurrences
 
 
-def generate_yearly_word_count(source_directory: Path, target_path: Path):
+def generate_yearly_word_counts(source_directory: Path, target_directory: Path):
     """Generate a yearly-word-count dataset based on the movies and television datasets."""
 
-    print(f"Generating yearly-word-count dataset at {target_path}.")
+    print(f"Generating yearly-word-count datasets at {target_directory}.")
 
     # Find occurrences in movies
     movies_db = pandas.read_csv(source_directory / "movies_db.csv")
@@ -143,7 +159,23 @@ def generate_yearly_word_count(source_directory: Path, target_path: Path):
     # Count yearly occurrences
     yearly_word_count = occurrences.groupby(occurrences.columns.tolist(), as_index=False).size()
     yearly_word_count.rename(columns={"size": "count"}, inplace=True)
-    yearly_word_count.to_csv(target_path, index=False)
+
+    # Remove words with less than 10 total occurrences
+    words = yearly_word_count["word"]
+    counts = yearly_word_count["count"]
+    yearly_word_count = yearly_word_count[counts.groupby(words).transform("sum") >= 10]
+
+    # Remove words spread over less than 5 years
+    words = yearly_word_count["word"]
+    years = yearly_word_count["year"]
+    yearly_word_count = yearly_word_count[years.groupby(words).transform("count") >= 5]
+
+    # Store separate files
+    target_directory.mkdir(parents=True, exist_ok=True)
+    yearly_word_count.to_csv(str(target_directory) + ".csv", index=False)
+    for (name, data_frame) in yearly_word_count.groupby("word"):
+        target_path = target_directory / (name + ".csv")
+        data_frame.to_csv(target_path, index=False)
 
 
 def preprocess_all(source_directory: Path, target_directory: Path, preprocessing_tasks: dict):
@@ -197,7 +229,7 @@ def main():
     clean_all(convert_dir, clean_dir, clean_functions)
 
     preprocessing_tasks = {
-        "yearly_word_count.csv": generate_yearly_word_count
+        "yearly_word_count": generate_yearly_word_counts
     }
 
     preprocess_dir = data_dir / "preprocessed"
