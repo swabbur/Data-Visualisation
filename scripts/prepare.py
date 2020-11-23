@@ -170,7 +170,11 @@ def generate_yearly_word_counts(source_directory: Path, target_directory: Path):
     years = yearly_word_count["year"]
     yearly_word_count = yearly_word_count[years.groupby(words).transform("count") >= 5]
 
-    # Store separate files
+    # Store word list
+    word_list = pandas.DataFrame(yearly_word_count["word"].unique(), columns=["word"])
+    word_list.to_csv(target_directory.parent / "words.csv", index=False)
+
+    # Store yearly counts per word
     target_directory.mkdir(parents=True, exist_ok=True)
     for (name, data_frame) in yearly_word_count.groupby("word"):
         target_path = target_directory / (name + ".csv")

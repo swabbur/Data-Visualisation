@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Template</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+    <script>
+
+        // Inspiration: https://observablehq.com/@d3/stacked-to-grouped-bars.
+
+        var svg = d3.select("body")
+          .append("svg")
+          .attr("width", "720")
+          .attr("height", "480")
+          .style("background-color", "rgb(200, 200, 200)")
+
+        function type() {
+            
+        }
+
+        function present() {
+
+        }
+
+        d3.csv("example.csv", type, present)
+
+    </script>
+</body>
+</html>
