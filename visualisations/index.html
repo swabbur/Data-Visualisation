@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Spoken Language in Modern Media</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
     <!-- <script src="js/color.js"></script> -->
     <script src="js/composition.js"></script>
-    <!-- <script src="js/graph.js"></script> -->
+    <script src="js/graph.js"></script>
+    <style>
+
+    </style>
 </head>
 <body>
     <script>
@@ -21,29 +25,92 @@
         // Create container
         const root = new Container(body);
 
+        // Add divisions
+
+        const searchDiv = document.createElement("div");
+        searchDiv.style.backgroundColor = "rgb(239, 239, 239)";
+        root.add(Direction.RIGHT, searchDiv);
+
+        const radialDiv = document.createElement("div");
+        radialDiv.style.backgroundColor = "rgb(207, 207, 207)";
+        root.add(Direction.RIGHT, radialDiv);
+
+        const graphDiv = document.createElement("div");
+        graphDiv.style.backgroundColor = "rgb(255, 255, 255)";
+        root.add(Direction.BOTTOM, graphDiv);
+
+        // Add figures
+
+        function type(entry) {
+            entry.year = parseInt(entry.year)
+            entry.count = parseInt(entry.count)
+            return entry
+        }
+
+        function render(entries) {
+
+            // Split entries
+            const movie_entries = entries.filter(function(entry) {
+                return entry.source == "movie";
+            });
+
+            const tv_entries = entries.filter(function(entry) {
+                return entry.source == "tv";
+            });
+
+            // Configure scales
+            const dimensions = get_dimensions(graphDiv);
+            const width = dimensions.width;
+            const height = dimensions.height - 5;
+
+            const x_scale = d3.scale.linear()
+                .domain(d3.extent(entries, function (entry) { return entry.year; }))
+                .range([0, width]);
+
+            const y_scale = d3.scale.linear()
+                .domain(d3.extent(entries, function (entry) { return entry.count; }))
+                .range([height, 0]);
+
+            const color_scale = d3.scale.category10();
+
+            // Create graph
+            const graph = d3.select(graphDiv).append("svg")
+                .attr("width", width + "px")
+                .attr("height", height + "px");
+
+            // Create paths
+            const movie_path = graph.append("path")
+                .attr("fill", "none")
+                .attr("stroke", color_scale("movie"))
+                .attr("stroke-width", "2px");
+
+            const tv_path = graph.append("path")
+                .attr("fill", "none")
+                .attr("stroke", color_scale("tv"))
+                .attr("stroke-width", "2px");
+
+            // Update all elements
+            const movie_line = d3.svg.line()
+                .x(function (entry) { return x_scale(entry.year); })
+                .y(function (entry) { return y_scale(entry.count); });
+
+            const tv_line = d3.svg.line()
+                .x(function (entry) { return x_scale(entry.year); })
+                .y(function (entry) { return y_scale(entry.count); });
+
+            movie_path.attr("d", movie_line(movie_entries));
+
+            tv_path.attr("d", tv_line(tv_entries));
+        }
+
+        d3.csv("data/understand.csv", type, render);
+
         // Add resize callback
         window.onresize = function (event) {
             body.style.width = html.clientWidth + "px";
             body.style.height = html.clientHeight + "px";
             root.render();
         }
-
-        // Add components
-
-        var count = 0;
-        function add(direction, color) {
-            count++;
-            setTimeout(function () {
-                var div = document.createElement("div");
-                div.style.backgroundColor = color;
-                root.add(direction,div);
-            }, 500 * count);
-        }
-
-        add(Direction.RIGHT, "rgba(255, 0, 0, 0.5)");
-        add(Direction.RIGHT, "rgba(0, 255, 0, 0.5)");
-        add(Direction.BOTTOM, "rgba(0, 0, 255, 0.5)");
-        add(Direction.LEFT, "rgba(0, 0, 0, 0.5)");
 
     </script>
 </body>

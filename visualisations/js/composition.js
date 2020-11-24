@@ -51,7 +51,7 @@ class Container {
         // Perform initial render.
         this.render();
     }
-
+    
     add(direction, element) {
         
         // Prepare element
