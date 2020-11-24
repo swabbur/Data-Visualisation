@@ -99,7 +99,7 @@ def clean_all(source_directory: Path, target_directory: Path, clean_functions: d
                 shutil.copy(source_path, target_path)
 
 
-def to_occurrences(database: pandas.DataFrame, lexicon: pandas.DataFrame, sources: pandas.DataFrame, name: str):
+def to_occurrences(database: pandas.DataFrame, lexicon: pandas.DataFrame, sources: pandas.DataFrame):
     """Collect year-word pairs from the combination of data frames"""
 
     # Remove words other than adjectives (r), adverbs (j), nouns (n), and verbs (v).
@@ -109,6 +109,10 @@ def to_occurrences(database: pandas.DataFrame, lexicon: pandas.DataFrame, source
     # Remove words other than nouns (n) and verbs (v).
     pos_pattern = re.compile("^[nv].*$")
     lexicon = lexicon[lexicon["pos"].str.match(pos_pattern) == True]
+
+    # Remove words representing people/persons
+    # person_pattern = re.compile("^((?!np).)*$")
+    # lexicon = lexicon[lexicon["pos"].str.match(person_pattern) == True]
 
     # Select required columns
     lexicon = lexicon[["word_id", "lemma"]]
@@ -131,12 +135,11 @@ def to_occurrences(database: pandas.DataFrame, lexicon: pandas.DataFrame, source
         .merge(lexicon, on="word_id")\
         .merge(sources, on="text_id")\
         .drop(columns=["word_id", "text_id"])
-    occurrences["source"] = name
 
     return occurrences
 
 
-def generate_yearly_word_counts(source_directory: Path, target_directory: Path):
+def generate_words_and_counts(source_directory: Path, target_directory: Path):
     """Generate a yearly-word-count dataset based on the movies and television datasets."""
 
     print(f"Generating yearly-word-count datasets at {target_directory}.")
@@ -145,40 +148,43 @@ def generate_yearly_word_counts(source_directory: Path, target_directory: Path):
     movies_db = pandas.read_csv(source_directory / "movies_db.csv")
     movies_lexicon = pandas.read_csv(source_directory / "movies_lexicon.csv")
     movies_sources = pandas.read_csv(source_directory / "movies_sources.csv")
-    movies_occurrences = to_occurrences(movies_db, movies_lexicon, movies_sources, "movie")
+    movies_occurrences = to_occurrences(movies_db, movies_lexicon, movies_sources)
 
     # Find occurrences in television series
     tv_db = pandas.read_csv(source_directory / "tv_db.csv")
     tv_lexicon = pandas.read_csv(source_directory / "tv_lexicon.csv")
     tv_sources = pandas.read_csv(source_directory / "tv_sources.csv")
-    tv_occurrences = to_occurrences(tv_db, tv_lexicon, tv_sources, "tv")
+    tv_occurrences = to_occurrences(tv_db, tv_lexicon, tv_sources)
 
-    # Merge occurrences
-    occurrences = pandas.concat([movies_occurrences, tv_occurrences])
+    # Count words in movies
+    movie_counts = movies_occurrences.groupby(["word", "year"], as_index=False).size()
+    movie_counts.rename(columns={"size": "movie"}, inplace=True)
 
-    # Count yearly occurrences
-    yearly_word_count = occurrences.groupby(occurrences.columns.tolist(), as_index=False).size()
-    yearly_word_count.rename(columns={"size": "count"}, inplace=True)
+    # Count words in television series
+    tv_counts = tv_occurrences.groupby(["word", "year"], as_index=False).size()
+    tv_counts.rename(columns={"size": "tv"}, inplace=True)
 
-    # Remove words with less than 10 total occurrences
-    words = yearly_word_count["word"]
-    counts = yearly_word_count["count"]
-    yearly_word_count = yearly_word_count[counts.groupby(words).transform("sum") >= 10]
+    # Merge counts
+    counts = pandas.merge(movie_counts, tv_counts, how="outer", on=["word", "year"], sort=True).fillna(0)
+    counts["movie"] = counts["movie"].astype("int16")
+    counts["tv"] = counts["tv"].astype("int16")
+    counts["total"] = counts["movie"] + counts["tv"]
 
-    # Remove words spread over less than 5 years
-    words = yearly_word_count["word"]
-    years = yearly_word_count["year"]
-    yearly_word_count = yearly_word_count[years.groupby(words).transform("count") >= 5]
+    # Remove words with less than 10 total occurrences or less than 5 years
+    # noinspection PyTypeChecker
+    counts = counts.groupby("word").filter(lambda sub: sub["total"].sum() >= 10 and sub["year"].count() >= 5)
+    counts.reset_index(drop=True, inplace=True)
+    counts = counts[["word", "year", "movie", "tv", "total"]]
 
     # Store word list
-    word_list = pandas.DataFrame(yearly_word_count["word"].unique(), columns=["word"])
+    word_list = pandas.DataFrame(counts["word"].unique(), columns=["word"])
     word_list.to_csv(target_directory.parent / "words.csv", index=False)
 
     # Store yearly counts per word
     target_directory.mkdir(parents=True, exist_ok=True)
-    for (name, data_frame) in yearly_word_count.groupby("word"):
+    for (name, data_frame) in counts.groupby("word"):
         target_path = target_directory / (name + ".csv")
-        data_frame[["year", "source", "count"]].to_csv(target_path, index=False)
+        data_frame[["year", "movie", "tv", "total"]].to_csv(target_path, index=False)
 
 
 def preprocess_all(source_directory: Path, target_directory: Path, preprocessing_tasks: dict):
@@ -232,7 +238,7 @@ def main():
     clean_all(convert_dir, clean_dir, clean_functions)
 
     preprocessing_tasks = {
-        "yearly_word_count": generate_yearly_word_counts
+        "counts": generate_words_and_counts
     }
 
     preprocess_dir = data_dir / "preprocessed"

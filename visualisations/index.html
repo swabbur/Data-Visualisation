@@ -50,15 +50,28 @@
         function render(entries) {
 
             // Split entries
-            const movie_entries = entries.filter(function(entry) {
-                return entry.source == "movie";
-            });
 
             const tv_entries = entries.filter(function(entry) {
                 return entry.source == "tv";
             });
 
+            const movie_entries = entries.filter(function(entry) {
+                return entry.source == "movie";
+            });
+
+            // Add associated movie_count to tv_entries
+
+            for (const tv_entry of tv_entries) {
+                tv_entry.movie_count = 0;
+                for (const movie_entry of movie_entries) {
+                    if (tv_entry.year == movie_entry.year) {
+                        tv_entry.movie_count = movie_entry.count;
+                    }
+                }
+            }
+
             // Configure scales
+
             const dimensions = get_dimensions(graphDiv);
             const width = dimensions.width;
             const height = dimensions.height - 5;
@@ -73,39 +86,39 @@
 
             const color_scale = d3.scale.category10();
 
+            // Create areas
+
+            const tv_area = d3.svg.area()
+                .x(function (entry) { return x_scale(entry.year); })
+                .y0(function (entry) { return y_scale(entry.movie_count); })
+                .y1(function (entry) { return y_scale(entry.count + entry.movie_count); });
+
+            const movie_area = d3.svg.area()
+                .x(function (entry) { return x_scale(entry.year); })
+                .y0(height)
+                .y1(function (entry) { return y_scale(entry.count); });
+
             // Create graph
+
             const graph = d3.select(graphDiv).append("svg")
                 .attr("width", width + "px")
                 .attr("height", height + "px");
 
             // Create paths
-            const movie_path = graph.append("path")
-                .attr("fill", "none")
-                .attr("stroke", color_scale("movie"))
-                .attr("stroke-width", "2px");
 
             const tv_path = graph.append("path")
-                .attr("fill", "none")
-                .attr("stroke", color_scale("tv"))
-                .attr("stroke-width", "2px");
-
-            // Update all elements
-            const movie_line = d3.svg.line()
-                .x(function (entry) { return x_scale(entry.year); })
-                .y(function (entry) { return y_scale(entry.count); });
-
-            const tv_line = d3.svg.line()
-                .x(function (entry) { return x_scale(entry.year); })
-                .y(function (entry) { return y_scale(entry.count); });
-
-            movie_path.attr("d", movie_line(movie_entries));
-
-            tv_path.attr("d", tv_line(tv_entries));
+                .attr("fill", color_scale("tv"))
+                .attr("d", tv_area(tv_entries));
+            
+            const movie_path = graph.append("path")
+                .attr("fill", color_scale("movie"))
+                .attr("d", movie_area(movie_entries));
         }
 
         d3.csv("data/understand.csv", type, render);
 
         // Add resize callback
+
         window.onresize = function (event) {
             body.style.width = html.clientWidth + "px";
             body.style.height = html.clientHeight + "px";
