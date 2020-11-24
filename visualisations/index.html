@@ -43,32 +43,13 @@
 
         function type(entry) {
             entry.year = parseInt(entry.year)
-            entry.count = parseInt(entry.count)
+            entry.movie = parseInt(entry.movie)
+            entry.tv = parseInt(entry.tv)
+            entry.total = parseInt(entry.total)
             return entry
         }
 
         function render(entries) {
-
-            // Split entries
-
-            const tv_entries = entries.filter(function(entry) {
-                return entry.source == "tv";
-            });
-
-            const movie_entries = entries.filter(function(entry) {
-                return entry.source == "movie";
-            });
-
-            // Add associated movie_count to tv_entries
-
-            for (const tv_entry of tv_entries) {
-                tv_entry.movie_count = 0;
-                for (const movie_entry of movie_entries) {
-                    if (tv_entry.year == movie_entry.year) {
-                        tv_entry.movie_count = movie_entry.count;
-                    }
-                }
-            }
 
             // Configure scales
 
@@ -81,22 +62,22 @@
                 .range([0, width]);
 
             const y_scale = d3.scale.linear()
-                .domain(d3.extent(entries, function (entry) { return entry.count; }))
+                .domain(d3.extent(entries, function (entry) { return entry.total; }))
                 .range([height, 0]);
 
             const color_scale = d3.scale.category10();
 
             // Create areas
 
-            const tv_area = d3.svg.area()
-                .x(function (entry) { return x_scale(entry.year); })
-                .y0(function (entry) { return y_scale(entry.movie_count); })
-                .y1(function (entry) { return y_scale(entry.count + entry.movie_count); });
-
             const movie_area = d3.svg.area()
                 .x(function (entry) { return x_scale(entry.year); })
                 .y0(height)
-                .y1(function (entry) { return y_scale(entry.count); });
+                .y1(function (entry) { return y_scale(entry.movie); });
+
+            const stacked_tv_area = d3.svg.area()
+                .x(function (entry) { return x_scale(entry.year); })
+                .y0(function (entry) { return y_scale(entry.movie); })
+                .y1(function (entry) { return y_scale(entry.total); });
 
             // Create graph
 
@@ -106,13 +87,13 @@
 
             // Create paths
 
-            const tv_path = graph.append("path")
-                .attr("fill", color_scale("tv"))
-                .attr("d", tv_area(tv_entries));
-            
             const movie_path = graph.append("path")
                 .attr("fill", color_scale("movie"))
-                .attr("d", movie_area(movie_entries));
+                .attr("d", movie_area(entries));
+
+            const stacked_tv_path = graph.append("path")
+                .attr("fill", color_scale("tv"))
+                .attr("d", stacked_tv_area(entries));
         }
 
         d3.csv("data/understand.csv", type, render);
