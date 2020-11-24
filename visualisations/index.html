@@ -53,9 +53,16 @@
 
             // Configure scales
 
+            const margins = {
+                top: 5,
+                bottom: 5,
+                left: 0,
+                right: 0,
+            }
+
             const dimensions = get_dimensions(graphDiv);
             const width = dimensions.width;
-            const height = dimensions.height - 5;
+            const height = dimensions.height - 4;
 
             const x_scale = d3.scale.linear()
                 .domain(d3.extent(entries, function (entry) { return entry.year; }))
@@ -70,11 +77,13 @@
             // Create areas
 
             const movie_area = d3.svg.area()
+                .interpolate("cardinal")
                 .x(function (entry) { return x_scale(entry.year); })
                 .y0(height)
                 .y1(function (entry) { return y_scale(entry.movie); });
 
             const stacked_tv_area = d3.svg.area()
+                .interpolate("cardinal")
                 .x(function (entry) { return x_scale(entry.year); })
                 .y0(function (entry) { return y_scale(entry.movie); })
                 .y1(function (entry) { return y_scale(entry.total); });
