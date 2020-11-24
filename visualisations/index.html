@@ -53,13 +53,6 @@
 
             // Configure scales
 
-            const margins = {
-                top: 5,
-                bottom: 5,
-                left: 0,
-                right: 0,
-            }
-
             const dimensions = get_dimensions(graphDiv);
             const width = dimensions.width;
             const height = dimensions.height - 4;
@@ -70,7 +63,7 @@
 
             const y_scale = d3.scale.linear()
                 .domain(d3.extent(entries, function (entry) { return entry.total; }))
-                .range([height, 0]);
+                .range([height - 40, 20]);
 
             const color_scale = d3.scale.category10();
 
@@ -79,7 +72,7 @@
             const movie_area = d3.svg.area()
                 .interpolate("cardinal")
                 .x(function (entry) { return x_scale(entry.year); })
-                .y0(height)
+                .y0(height - 40)
                 .y1(function (entry) { return y_scale(entry.movie); });
 
             const stacked_tv_area = d3.svg.area()
@@ -96,13 +89,47 @@
 
             // Create paths
 
-            const movie_path = graph.append("path")
+            graph.append("path")
                 .attr("fill", color_scale("movie"))
                 .attr("d", movie_area(entries));
 
-            const stacked_tv_path = graph.append("path")
+            graph.append("path")
                 .attr("fill", color_scale("tv"))
                 .attr("d", stacked_tv_area(entries));
+
+            graph.append("rect")
+                .attr("fill", "white")
+                .attr("x", 0)
+                .attr("y", height - 40)
+                .attr("width", width)
+                .attr("height", 40);
+
+            graph.append("rect")
+                .attr("fill", "black")
+                .attr("x", 0)
+                .attr("y", height - 40)
+                .attr("width", width)
+                .attr("height", 2);
+
+            const minmax = d3.extent(entries, function (entry) { return entry.year; });
+            for (var year = minmax[0]; year < minmax[1]; year++) {
+                if (year % 10 == 0) {
+
+                    graph.append("rect")
+                        .attr("fill", "black")
+                        .attr("x", x_scale(year) - 1)
+                        .attr("y", height - 40)
+                        .attr("width", 3)
+                        .attr("height", 7);
+                    
+                    graph.append("text")
+                        .attr("fill", "black")
+                        .attr("x", x_scale(year) - 20)
+                        .attr("y", height - 10)
+                        .attr("d", ".35em")
+                        .text(year);
+                }
+            }
         }
 
         d3.csv("data/understand.csv", type, render);
