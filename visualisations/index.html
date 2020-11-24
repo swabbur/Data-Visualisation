@@ -111,6 +111,8 @@
                 .attr("width", width)
                 .attr("height", 2);
 
+            // Add x-axis
+
             const minmax = d3.extent(entries, function (entry) { return entry.year; });
             for (var year = minmax[0]; year < minmax[1]; year++) {
                 if (year % 10 == 0) {
