@@ -75,6 +75,18 @@ class Graph {
             .attr("fill-opacity", 0.33)
             .attr("d", area(rows));
     
+        // const area2 = d3.area()
+        //     .curve(this.design.interpolation)
+        //     .x(row => this.xScale(row.year))
+        //     .y0(this.dimensions.height - this.margin.bottom)
+        //     .y1(row => this.yScale(row.movie));
+    
+        // this.graph.append("path")
+        //     .attr("stroke", "none")
+        //     .attr("fill", "red")
+        //     .attr("fill-opacity", 0.33)
+        //     .attr("d", area2(rows));
+
         // Add line
     
         const line = d3.line()
@@ -88,6 +100,18 @@ class Graph {
             .attr("stroke-width", 2)
             .attr("stroke-opacity", 0.67)
             .attr("d", line(rows));
+    
+        // const line2 = d3.line()
+        //     .curve(this.design.interpolation)
+        //     .x(row => this.xScale(row.year))
+        //     .y(row => this.yScale(row.movie));
+    
+        // this.graph.append("path")
+        //     .attr("fill", "none")
+        //     .attr("stroke", "red")
+        //     .attr("stroke-width", 2)
+        //     .attr("stroke-opacity", 0.67)
+        //     .attr("d", line2(rows));
         
         // Add markers
     
@@ -110,6 +134,25 @@ class Graph {
         markers.exit()
             .remove();
     
+        // const markers2 = this.graph.selectAll("rect").data(rows);
+    
+        // markers2.enter()
+        //     .append("rect")
+        //     .attr("fill", "red")
+        //     .attr("width", this.design.radius * 2)
+        //     .attr("height", this.design.radius * 2)
+        //     .attr("x", row => this.xScale(row.year) - this.design.radius)
+        //     .attr("y", row => this.yScale(row.movie) - this.design.radius);
+    
+        // markers2
+        //     .transition()
+        //     .duration(this.design.transition.duration)
+        //     .ease(this.design.transition.ease)
+        //     .attr("x", row => this.xScale(row.year) - this.design.radius)
+        //     .attr("y", row => this.yScale(row.movie) - this.design.radius);
+    
+        // markers2.exit()
+        //     .remove();
         
         // Add x-axis
     
