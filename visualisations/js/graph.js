@@ -19,8 +19,8 @@ class Graph {
         }
         
         this.design = {
-            color: "steelblue",
-            radius: 2,
+            color: "red",
+            radius: 4,
             interpolation: d3.curveCardinal,
             transition: {
                 ease: d3.easeCubicInOut,

@@ -2,64 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Spoken Language in Modern Media</title>
+    <title></title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
-    <script src="js/container.js"></script>
-    <script src="js/graph.js"></script>
     <style>
-
+        body {
+            margin: 0px;
+            padding: 0px;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
     <script>
 
-        // Get page components
-
-        const html = document.documentElement;
-        const body = document.body;
-
-        // Configure body size
-
-        body.style.width = html.clientWidth + "px";
-        body.style.height = html.clientHeight + "px";
-
-        // Create container
-
-        const root = new Container(body);
-
-        // Add divisions
-
-        const searchDiv = root.create(Direction.RIGHT);
-        searchDiv.style.backgroundColor = "rgb(255, 255, 255)";
+        const figure = d3.select("body").append("svg")
+            .attr("width", $(window).width())
+            .attr("height", $(window).height())
+            .style("background-color", "rgb(237, 237, 237)");
         
-        const radialDiv = root.create(Direction.RIGHT);
-        radialDiv.style.backgroundColor = "rgb(207, 207, 207)";
-        
-        const graphDiv = root.create(Direction.BOTTOM);
-        graphDiv.style.backgroundColor = "rgb(239, 239, 239)";
+        $(window).on("resize", () => {
+            figure.attr("width", $(window).width())
+                .attr("height", $(window).height());
+        });
 
-        // Add graph
+        const subfigure = figure.append("g")
+            .attr("transform", "translate(50, 50)");
 
-        var graph = new Graph(graphDiv);
-        graph.load("data/understand.csv");
-
-        // TODO: Fix incorrect update/replacement.
-        // setTimeout(() => graph.load("data/writing.csv"), 1000);
-        // setTimeout(() => graph.load("data/understand.csv"), 2000);
-
-        // Add resize callback
-
-        body.onresize = event => {
-
-            body.style.width = html.clientWidth + "px";
-            body.style.height = html.clientHeight + "px";
-
-            root.render();
-
-            graph.destroy();
-            graph = new Graph(graphDiv);
-            graph.load("data/understand.csv");
-        }
+        const square = subfigure.append("rect")
+            .attr("x", 50)
+            .attr("y", 0)
+            .attr("width", 50)
+            .attr("height", 50)
+            .attr("fill", "rgb(40, 40, 40)");
 
     </script>
 </body>
