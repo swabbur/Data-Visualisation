@@ -43,11 +43,11 @@ def clean_kwb(source_path: Path, target_path: Path):
     if not target_path.exists():
         print(f"Cleaning {source_path} to {target_path}")
 
-        # Select and rename columns
+        # Select, order, and rename columns
         columns = {
             "recs": "category",
-            "regio": "region",
             "gm_naam": "municipality",
+            "regio": "name",
             "a_inw": "population",
             "bev_dich": "population_density",
             "a_woning": "house_count",
