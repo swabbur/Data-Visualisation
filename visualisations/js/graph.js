@@ -113,6 +113,7 @@ class Graph {
     
         const xAxis = d3.axisBottom()
             .scale(this.xScale)
+            .tickFormat(d3.format("d"));
             
         this.graph.append("g")
             .attr("transform", "translate(0, " + (this.dimensions.height - this.margin.bottom) + ")")
