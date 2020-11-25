@@ -52,9 +52,10 @@ class Container {
         this.render();
     }
     
-    add(direction, element) {
-        
+    create(direction) {
+
         // Prepare element
+        const element = document.createElement("div");
         element.style.display = "block";
         element.style.position = "absolute";
         element.style.top = "0px";
@@ -130,6 +131,9 @@ class Container {
 
         // Reposition and resize elements.
         this.render();
+
+        // Return element
+        return element;
     }
 
     // Reposition and resize elements based on alignment.

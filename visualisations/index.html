@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Spoken Language in Modern Media</title>
     <script src="https://d3js.org/d3.v6.min.js"></script>
-    <!-- <script src="js/color.js"></script> -->
     <script src="js/composition.js"></script>
     <script src="js/graph.js"></script>
     <style>
@@ -30,128 +29,31 @@
 
         // Add divisions
 
-        const searchDiv = document.createElement("div");
+        const searchDiv = root.create(Direction.RIGHT);
         searchDiv.style.backgroundColor = "rgb(239, 239, 239)";
-        root.add(Direction.RIGHT, searchDiv);
-
-        const radialDiv = document.createElement("div");
+        
+        const radialDiv = root.create(Direction.RIGHT);
         radialDiv.style.backgroundColor = "rgb(207, 207, 207)";
-        root.add(Direction.RIGHT, radialDiv);
-
-        const graphDiv = document.createElement("div");
+        
+        const graphDiv = root.create(Direction.BOTTOM);
         graphDiv.style.backgroundColor = "rgb(255, 255, 255)";
-        root.add(Direction.BOTTOM, graphDiv);
 
-        // Define settings
+        // Add graph
 
-        const dimensions = {
-            width: get_dimensions(graphDiv).width,
-            height: get_dimensions(graphDiv).height - 5,
+        const graph = new Graph(graphDiv);
+        graph.load("data/understand.csv");
+
+        // TODO: Fix incorrect update/replacement.
+        // setTimeout(() => graph.load("data/writing.csv"), 1000);
+        // setTimeout(() => graph.load("data/understand.csv"), 2000);
+
+        // Add resize callback
+
+        body.onresize = event => {
+            body.style.width = html.clientWidth + "px";
+            body.style.height = html.clientHeight + "px";
+            root.render();
         }
-
-        const margin = {
-            top: 25,
-            bottom: 25,
-            left: 25,
-            right: 25,
-        }
-
-        const design = {
-            color: "steelblue",
-            radius: 2,
-            interpolation: d3.curveCardinal,
-            transition: {
-                ease: d3.easeCubicInOut,
-                duration: 1000,
-            },
-        }
-
-        // Create graph
-
-        const graph = d3.select(graphDiv).append("svg")
-            .attr("width", dimensions.width)
-            .attr("height", dimensions.height);
-
-        // Create scales
-
-        const xScale = d3.scaleLinear()
-            .range([margin.left, dimensions.width - margin.right]);
-
-        const yScale = d3.scaleLinear()
-            .range([dimensions.height - margin.bottom, margin.top]);
-
-        function render(rows) {
-
-            xScale.domain(d3.extent(rows, row => row.year));
-            yScale.domain(d3.extent(rows, row => row.total));
-
-            // Add area
-
-            const area = d3.area()
-                .curve(design.interpolation)
-                .x(row => xScale(row.year))
-                .y0(dimensions.height - margin.bottom)
-                .y1(row => yScale(row.total));
-
-            graph.append("path")
-                .attr("stroke", "none")
-                .attr("fill", design.color)
-                .attr("fill-opacity", 0.33)
-                .attr("d", area(rows));
-
-            // Add line
-
-            const line = d3.line()
-                .curve(design.interpolation)
-                .x(row => xScale(row.year))
-                .y(row => yScale(row.total));
-
-            graph.append("path")
-                .attr("fill", "none")
-                .attr("stroke", design.color)
-                .attr("stroke-width", 2)
-                .attr("stroke-opacity", 0.67)
-                .attr("d", line(rows));
-            
-            // Add markers
-
-            const markers = graph.selectAll("circle").data(rows);
-
-            markers.enter()
-                .append("circle")
-                .attr("fill", design.color)
-                .attr("r", design.radius)
-                .attr("cx", row => xScale(row.year))
-                .attr("cy", row => yScale(row.total));
-
-            markers
-                .transition()
-                .duration(design.transition.duration)
-                .ease(design.transition.ease)
-                .attr("cx", row => xScale(row.year))
-                .attr("cy", row => yScale(row.total));
-
-            markers.exit()
-                .remove();
-
-            
-            // Add x-axis
-
-            const xAxis = d3.axisBottom()
-                .scale(xScale)
-                
-            graph.append("g")
-                .attr("transform", "translate(0, " + (dimensions.height - margin.bottom) + ")")
-                .call(xAxis);
-        }
-
-        // Load data
-        fetch("data/understand.csv")
-            .then(response => response.text())
-            .then(data => {
-                rows = d3.csvParse(data, d3.autoType);
-                render(rows);
-            });
 
     </script>
 </body>
