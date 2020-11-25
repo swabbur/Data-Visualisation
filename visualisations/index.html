@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Spoken Language in Modern Media</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
     <!-- <script src="js/color.js"></script> -->
     <script src="js/composition.js"></script>
     <script src="js/graph.js"></script>
@@ -15,14 +15,17 @@
     <script>
 
         // Get page components
+
         const html = document.documentElement;
         const body = document.body;
 
         // Configure body size
+
         body.style.width = html.clientWidth + "px";
         body.style.height = html.clientHeight + "px";
 
         // Create container
+
         const root = new Container(body);
 
         // Add divisions
@@ -39,110 +42,116 @@
         graphDiv.style.backgroundColor = "rgb(255, 255, 255)";
         root.add(Direction.BOTTOM, graphDiv);
 
-        // Add figures
+        // Define settings
 
-        function type(entry) {
-            entry.year = parseInt(entry.year)
-            entry.movie = parseInt(entry.movie)
-            entry.tv = parseInt(entry.tv)
-            entry.total = parseInt(entry.total)
-            return entry
+        const dimensions = {
+            width: get_dimensions(graphDiv).width,
+            height: get_dimensions(graphDiv).height - 5,
         }
 
-        function render(entries) {
+        const margin = {
+            top: 25,
+            bottom: 25,
+            left: 25,
+            right: 25,
+        }
 
-            // Configure scales
+        const design = {
+            color: "steelblue",
+            radius: 2,
+            interpolation: d3.curveCardinal,
+            transition: {
+                ease: d3.easeCubicInOut,
+                duration: 1000,
+            },
+        }
 
-            const dimensions = get_dimensions(graphDiv);
-            const width = dimensions.width;
-            const height = dimensions.height - 4;
+        // Create graph
 
-            const x_scale = d3.scale.linear()
-                .domain(d3.extent(entries, function (entry) { return entry.year; }))
-                .range([0, width]);
+        const graph = d3.select(graphDiv).append("svg")
+            .attr("width", dimensions.width)
+            .attr("height", dimensions.height);
 
-            const y_scale = d3.scale.linear()
-                .domain(d3.extent(entries, function (entry) { return entry.total; }))
-                .range([height - 40, 20]);
+        // Create scales
 
-            const color_scale = d3.scale.category10();
+        const xScale = d3.scaleLinear()
+            .range([margin.left, dimensions.width - margin.right]);
 
-            // Create areas
+        const yScale = d3.scaleLinear()
+            .range([dimensions.height - margin.bottom, margin.top]);
 
-            const movie_area = d3.svg.area()
-                .interpolate("cardinal")
-                .x(function (entry) { return x_scale(entry.year); })
-                .y0(height - 40)
-                .y1(function (entry) { return y_scale(entry.movie); });
+        function render(rows) {
 
-            const stacked_tv_area = d3.svg.area()
-                .interpolate("cardinal")
-                .x(function (entry) { return x_scale(entry.year); })
-                .y0(function (entry) { return y_scale(entry.movie); })
-                .y1(function (entry) { return y_scale(entry.total); });
+            xScale.domain(d3.extent(rows, row => row.year));
+            yScale.domain(d3.extent(rows, row => row.total));
 
-            // Create graph
+            // Add area
 
-            const graph = d3.select(graphDiv).append("svg")
-                .attr("width", width + "px")
-                .attr("height", height + "px");
-
-            // Create paths
+            const area = d3.area()
+                .curve(design.interpolation)
+                .x(row => xScale(row.year))
+                .y0(dimensions.height - margin.bottom)
+                .y1(row => yScale(row.total));
 
             graph.append("path")
-                .attr("fill", color_scale("movie"))
-                .attr("d", movie_area(entries));
+                .attr("stroke", "none")
+                .attr("fill", design.color)
+                .attr("fill-opacity", 0.33)
+                .attr("d", area(rows));
+
+            // Add line
+
+            const line = d3.line()
+                .curve(design.interpolation)
+                .x(row => xScale(row.year))
+                .y(row => yScale(row.total));
 
             graph.append("path")
-                .attr("fill", color_scale("tv"))
-                .attr("d", stacked_tv_area(entries));
+                .attr("fill", "none")
+                .attr("stroke", design.color)
+                .attr("stroke-width", 2)
+                .attr("stroke-opacity", 0.67)
+                .attr("d", line(rows));
+            
+            // Add markers
 
-            graph.append("rect")
-                .attr("fill", "white")
-                .attr("x", 0)
-                .attr("y", height - 40)
-                .attr("width", width)
-                .attr("height", 40);
+            const markers = graph.selectAll("circle").data(rows);
 
-            graph.append("rect")
-                .attr("fill", "black")
-                .attr("x", 0)
-                .attr("y", height - 40)
-                .attr("width", width)
-                .attr("height", 2);
+            markers.enter()
+                .append("circle")
+                .attr("fill", design.color)
+                .attr("r", design.radius)
+                .attr("cx", row => xScale(row.year))
+                .attr("cy", row => yScale(row.total));
 
+            markers
+                .transition()
+                .duration(design.transition.duration)
+                .ease(design.transition.ease)
+                .attr("cx", row => xScale(row.year))
+                .attr("cy", row => yScale(row.total));
+
+            markers.exit()
+                .remove();
+
+            
             // Add x-axis
 
-            const minmax = d3.extent(entries, function (entry) { return entry.year; });
-            for (var year = minmax[0]; year < minmax[1]; year++) {
-                if (year % 10 == 0) {
-
-                    graph.append("rect")
-                        .attr("fill", "black")
-                        .attr("x", x_scale(year) - 1)
-                        .attr("y", height - 40)
-                        .attr("width", 3)
-                        .attr("height", 7);
-                    
-                    graph.append("text")
-                        .attr("fill", "black")
-                        .attr("x", x_scale(year) - 20)
-                        .attr("y", height - 10)
-                        .attr("d", ".35em")
-                        .text(year);
-                }
-            }
+            const xAxis = d3.axisBottom()
+                .scale(xScale)
+                
+            graph.append("g")
+                .attr("transform", "translate(0, " + (dimensions.height - margin.bottom) + ")")
+                .call(xAxis);
         }
 
-        d3.csv("data/understand.csv", type, render);
-
-        // Add resize callback
-
-        window.onresize = function (event) {
-            body.style.width = html.clientWidth + "px";
-            body.style.height = html.clientHeight + "px";
-            root.render();
-        }
+        // Load data
+        fetch("data/understand.csv")
+            .then(response => response.text())
+            .then(data => {
+                rows = d3.csvParse(data, d3.autoType);
+                render(rows);
+            });
 
     </script>
 </body>
