@@ -2,6 +2,8 @@ class Graph {
 
     constructor(container) {
 
+        this.container = container;
+
         // Configure
 
         this.dimensions = {
@@ -118,5 +120,9 @@ class Graph {
         this.graph.append("g")
             .attr("transform", "translate(0, " + (this.dimensions.height - this.margin.bottom) + ")")
             .call(xAxis);
+    }
+
+    destroy() {
+        this.container.removeChild(this.graph.node());
     }
 }

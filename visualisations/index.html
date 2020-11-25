@@ -40,7 +40,7 @@
 
         // Add graph
 
-        const graph = new Graph(graphDiv);
+        var graph = new Graph(graphDiv);
         graph.load("data/understand.csv");
 
         // TODO: Fix incorrect update/replacement.
@@ -50,9 +50,15 @@
         // Add resize callback
 
         body.onresize = event => {
+
             body.style.width = html.clientWidth + "px";
             body.style.height = html.clientHeight + "px";
+
             root.render();
+
+            graph.destroy();
+            graph = new Graph(graphDiv);
+            graph.load("data/understand.csv");
         }
 
     </script>
