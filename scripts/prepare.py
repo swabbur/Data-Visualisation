@@ -106,6 +106,13 @@ def main():
     clean_dir.mkdir(parents=True, exist_ok=True)
     clean_kwb(convert_dir / "kwb-2019.csv", clean_dir / "kwb-2019.csv")
 
+    # Pre-process
+    # Actual factors to present
+
+    # Split
+    # Country, municipalities, districts, neighbourhoods.
+    # Can we create provinces from this data?
+
 
 if __name__ == '__main__':
     main()
