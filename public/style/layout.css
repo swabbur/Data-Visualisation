@@ -1,0 +1,26 @@
+/* Page Layout */
+
+#container {
+    display: hidden;
+    position: fixed;
+    top: 0%;
+    left: 0%;
+}
+
+#map {
+    position: absolute;
+    left: 0%;
+    top: 0%;
+    width: 50%;
+    height: 100%;
+    background-color: blue;
+}
+
+#preferences {
+    position: absolute;
+    left: 50%;
+    top: 0%;
+    width: 50%;
+    height: 100%;
+    background-color: green;
+}

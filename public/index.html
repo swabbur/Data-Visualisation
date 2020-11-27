@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Find a house!</title>
+    <link rel="stylesheet" href="style/layout.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+
+    <div id="container">
+        <svg id="map"></svg>
+        <svg id="preferences"></svg>
+    </div>
+
+    <script>
+
+        function resize() {
+            
+            const width = $(window).width();
+            const height = $(window).height();
+
+            const size = Math.min(width / 3 * 2, height);
+            const x = (width - size * 3 / 2) / 2;
+            const y = (height - size) / 2;
+            $("#container").css({
+                display: "block",
+                left: x,
+                top: y,
+                width: size * 3 / 2,
+                height: size,
+            });
+        }
+        $(window).on("resize", resize);
+        resize();
+
+        const map = d3.select("#map");
+        map.append("rect")
+            .attr("x", 50)
+            .attr("y", 50)
+            .attr("width", 50)
+            .attr("height", 50)
+            .attr("fill", "rgb(40, 40, 40)");
+
+        const preferences = d3.select("#preferences");
+        preferences.append("rect")
+            .attr("x", 50)
+            .attr("y", 50)
+            .attr("width", 50)
+            .attr("height", 50)
+            .attr("fill", "rgb(40, 40, 40)");
+    </script>
+</body>
+</html>
