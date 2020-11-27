@@ -3,53 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <title>Find a house!</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"> 
     <link rel="stylesheet" href="style/layout.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
 </head>
 <body>
-
-    <div id="container">
-        <svg id="map"></svg>
-        <svg id="preferences"></svg>
+    <svg id="map"></svg>
+    <div id="options">
+        <div id="preferences">
+            <h1>Preferences</h1>
+            <table>
+                <tr>
+                    <td><label>Price</label></td>
+                    <td><input id="price" type="range" min="-1.0" max="1.0" step="0.01" value="0.0"></td>
+                </tr>
+                <tr>
+                    <td><label>Urbanity</label></td>
+                    <td><input id="urbanity" type="range" min="-1.0" max="1.0" step="0.01" value="0.0"></td>
+                </tr>
+                <tr>
+                    <td><label>Safety</label></td>
+                    <td><input id="safety" type="range" min="-1.0" max="1.0" step="0.01" value="0.0"></td>
+                </tr>
+                <tr>
+                    <td><label>Air Quality</label></td>
+                    <td><input id="air" type="range" min="-1.0" max="1.0" step="0.01" value="0.0"></td>
+                </tr>
+            </table>
+        </div>
+        <div id="requirements">
+            <h1>Requirements</h1>
+            <table>
+                <tr>
+                    <td><input id="" type="checkbox"></td>
+                    <td>School</td>
+                </tr>
+                <tr>
+                    <td><input id="" type="checkbox"></td>
+                    <td>Doctor</td>
+                </tr>
+                <tr>
+                    <td><input id="" type="checkbox"></td>
+                    <td>Market</td>
+                </tr>
+            </table>
+        </div>
+        <div id="legend">
+            <h1>Legend</h1>
+            <img id="colors" src="img/magma.png">
+        </div>
     </div>
-
     <script>
 
-        function resize() {
-            
-            const width = $(window).width();
-            const height = $(window).height();
+        // Generate elements
+        const elements = [];
+        for (var i = 0; i < 10; i++) {
+            elements.push({
+                x: Math.random(),
+                y: Math.random(),
+            })
+        }
 
-            const size = Math.min(width / 3 * 2, height);
-            const x = (width - size * 3 / 2) / 2;
-            const y = (height - size) / 2;
-            $("#container").css({
-                display: "block",
-                left: x,
-                top: y,
-                width: size * 3 / 2,
-                height: size,
+        // Render elements
+        function render(width, height) {
+            
+            const rects = d3.select("#map")
+                .selectAll("rect")
+                .data(elements);
+
+            rects.enter()
+                .append("rect")
+                    .attr("x", element => element.x * (width - 50) + 25)
+                    .attr("y", element => element.y * (height - 50) + 25)
+                    .attr("width", 50)
+                    .attr("height", 50)
+                    .attr("fill", "rgb(32, 32, 32)");
+
+            rects
+                .attr("x", element => element.x * (width - 50) + 25)
+                .attr("y", element => element.y * (height - 50) + 25)
+
+            rects.exit()
+                .remove()
+                
+        }
+
+        // Resize components
+        function resize() {
+            const width = $(window).width() - $("#options").width() - 64;
+            const height = $(window).height();
+            $("#map").css({
+                width: width,
+                height: height,
             });
+            $("#colors").css({
+                width: $("#options").width(),
+            });
+            render(width, height);
         }
         $(window).on("resize", resize);
         resize();
-
-        const map = d3.select("#map");
-        map.append("rect")
-            .attr("x", 50)
-            .attr("y", 50)
-            .attr("width", 50)
-            .attr("height", 50)
-            .attr("fill", "rgb(40, 40, 40)");
-
-        const preferences = d3.select("#preferences");
-        preferences.append("rect")
-            .attr("x", 50)
-            .attr("y", 50)
-            .attr("width", 50)
-            .attr("height", 50)
-            .attr("fill", "rgb(40, 40, 40)");
+        
     </script>
 </body>
 </html>
