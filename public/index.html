@@ -75,25 +75,26 @@
 
             rects.enter()
                 .append("rect")
-                    .attr("x", element => element.x * (width - 50) + 25)
-                    .attr("y", element => element.y * (height - 50) + 25)
+                    .attr("x", element => element.x * (width - 50))
+                    .attr("y", element => element.y * (height - 50))
                     .attr("width", 50)
                     .attr("height", 50)
                     .attr("fill", "rgb(32, 32, 32)");
 
             rects
-                .attr("x", element => element.x * (width - 50) + 25)
-                .attr("y", element => element.y * (height - 50) + 25)
+                .attr("x", element => element.x * (width - 50))
+                .attr("y", element => element.y * (height - 50))
 
             rects.exit()
                 .remove()
-                
         }
 
         // Resize components
         function resize() {
-            const width = $(window).width() - $("#options").width() - 64;
-            const height = $(window).height();
+
+            const width = $("body").width() - $("#options").width() - 64;
+            const height = Math.max($(window).height(), ($("#options").height() + 64));
+            
             $("#map").css({
                 width: width,
                 height: height,
@@ -101,6 +102,7 @@
             $("#colors").css({
                 width: $("#options").width(),
             });
+            
             render(width, height);
         }
         $(window).on("resize", resize);
