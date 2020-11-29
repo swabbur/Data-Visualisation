@@ -24,4 +24,5 @@ body {
 #colors {
     width: 0px;
     height: auto;
+    border: 1px solid black;
 }
