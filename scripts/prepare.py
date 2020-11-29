@@ -29,7 +29,7 @@ def convert_all(source_directory: Path, target_directory: Path):
             if file_path.suffix == ".xls" or file_path.suffix == ".xlsx":
                 convert_excel(file_path, target_path)
             else:
-                raise RuntimeError(f"Cannot convert {file_path} to CSV")
+                print(f"SKipping file {target_path}")
 
 
 def convert_excel(source_path: Path, target_path: Path):
@@ -88,9 +88,17 @@ def main():
     data_dir = Path("data")
     data_dir.mkdir(parents=True, exist_ok=True)
 
+    # API for data collection
+    # https://www.cbs.nl/nl-nl/onze-diensten/open-data/statline-als-open-data
+
+    # All data!
+    # https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&_la=nl&tableId=84718NED&_theme=401
+
     # Download online resources
+    cbs = "https://www.cbs.nl/-/media/cbs/dossiers/"
     urls = [
-        "https://www.cbs.nl/-/media/cbs/dossiers/nederland-regionaal/wijk-en-buurtstatistieken/_exel/kwb-2019.xls",
+        cbs + "nederland-regionaal/wijk-en-buurtstatistieken/_exel/kwb-2019.xls",
+        cbs + "nederland-regionaal/wijk-en-buurtstatistieken/wijkbuurtkaart_2019_v2.zip"
     ]
     download_dir = data_dir / "downloaded"
     download_dir.mkdir(parents=True, exist_ok=True)

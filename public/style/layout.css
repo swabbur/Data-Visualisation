@@ -21,8 +21,16 @@ body {
     /* transform: translateY(-50%); */
 }
 
-#colors {
-    width: 0px;
-    height: auto;
-    border: 1px solid black;
-}
+    #colors {
+        width: 0px;
+        height: auto;
+        border: 1px solid black;
+    }
+
+    #copyright {
+        right: 16px;
+        bottom: 16px;
+        padding-top: 16px;
+        font-size: 12px;
+        text-align: center;
+    }
