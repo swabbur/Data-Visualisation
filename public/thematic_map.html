@@ -9,23 +9,6 @@
         <div id="map" style="width:800px;height:600px"></div>
         <script>
 
-            var mapData;
-            var map;
-            var regions;
-            var range, legendGrades;
-            var min = Infinity,
-                max = -Infinity;
-            
-            function getStyle(y) {
-                var amount = 0;
-                feature.properties.density = amount;
-                return {
-                    color: '#333',
-                    fillColor: '#c0e7ff',
-                    fillOpacity: 1.0
-                };
-            }
-
             function onEachFeature(feature, layer) {
                 layer.on({
                     mouseover: highlightFeature,
@@ -35,13 +18,8 @@
             }
 
             function style(feature) {
-                var amount = 0;
-                feature.properties.density = amount;
-
                 return {
-                    color: '#333',
-                    fillColor: '#c0e7ff',
-                    fillOpacity: 0.6
+                    color: "#333"
                 };
             }
 
@@ -50,17 +28,13 @@
 
                 layer.setStyle({
                     weight: 3,
-                    color: '#fff',
-                    fillOpacity: 0.7
+                    color: "#fff"
                 });
 
-                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-                    layer.bringToFront();
-                }
+                layer.bringToFront();
             }
 
-            // get geojson from PDOK
-            mapData = jQuery.ajax({
+            var mapData = jQuery.ajax({
                 url: "https://geodata.nationaalgeoregister.nl/cbsgebiedsindelingen/wfs?OUTPUTFORMAT=json&REQUEST=GetFeature&SERVICE=WFS&SRSNAME=EPSG:4326&TypeName=cbs_gemeente_2019_gegeneraliseerd&VERSION=1.1.0",
                 dataType: "json",
                 success: console.log("Provincie data successfully loaded."),
@@ -69,23 +43,20 @@
                 }
             })
 
-            // when both data sources available
+            var map;
+            var regions;
             $.when(mapData).done(function () {
                 map = L.map('map').setView([52.6, 5.38], 8);
-
-                // add events to geojson features
                 regions = L.geoJSON(mapData.responseJSON, {
                     onEachFeature: onEachFeature,
                     style: style
                 }).addTo(map);
             });
 
-            // reset to original style
             function resetHighlight(e) {
                 regions.resetStyle(e.target);
             }
 
-            // zoom to feature when clicked
             function zoomToFeature(e) {
                 map.fitBounds(e.target.getBounds());
             }
