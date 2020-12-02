@@ -1,126 +1,86 @@
 import pandas
-import requests
-import shutil
+import cbsodata
 
+from functools import reduce
 from pathlib import Path
 
 
-def download_all(urls: [str], target_directory: Path):
-    """Download the online resources and store them in the target directory."""
-    for url in urls:
-        file_path = target_directory / url.split("/")[-1]
-        if not file_path.exists():
-            print(f"Downloading {url} to {file_path}.")
-            with requests.get(url, stream=True, allow_redirects=True) as response:
-                response.raise_for_status()
-                with file_path.open("wb") as file:
-                    for chunk in response.iter_content(chunk_size=2 ** 16):
-                        file.write(chunk)
+def download(identifier: str):
+    """Download a dataset from the CBS odata portal."""
+
+    # Prepare download directory
+    download_directory = Path("data/downloaded")
+    download_directory.mkdir(parents=True, exist_ok=True)
+
+    # Check if dataset was previously downloaded
+    file_path = download_directory / (identifier + ".csv")
+    if not file_path.exists():
+
+        # Download dataset
+        data = cbsodata.get_data(identifier)
+        data_frame = pandas.DataFrame(data)
+        print(data_frame)
+        data_frame.to_csv(file_path, index=False)
 
 
-def convert_all(source_directory: Path, target_directory: Path):
-    """Convert all text files in the source directory to UTF-8 encoded CSV files."""
-    for file_path in source_directory.iterdir():
-        target_path = (target_directory / file_path.name).with_suffix(".csv")
-        if not target_path.exists():
-            print(f"Converting {file_path} to {target_path}.")
-            if file_path.suffix == ".csv":
-                shutil.copyfile(file_path, target_path)
-            if file_path.suffix == ".xls" or file_path.suffix == ".xlsx":
-                convert_excel(file_path, target_path)
-            else:
-                print(f"SKipping file {target_path}")
+def clean(identifier: str):
+    """Clean a dataset by renaming and joining its columns."""
 
+    # Prepare download directory
+    download_directory = Path("data/downloaded")
+    download_directory.mkdir(parents=True, exist_ok=True)
 
-def convert_excel(source_path: Path, target_path: Path):
-    """Convert an excel file to a CSV file."""
-    data_frame = pandas.read_excel(str(source_path))
-    data_frame.to_csv(target_path, encoding="utf-8", index=False)
+    # Prepare clean directory
+    clean_directory = Path("data/cleaned")
+    clean_directory.mkdir(parents=True, exist_ok=True)
 
-
-def clean_kwb(source_path: Path, target_path: Path):
-    """Clean a KWB file."""
+    # Check if dataset was previously cleaned
+    target_path = clean_directory / (identifier + ".csv")
     if not target_path.exists():
-        print(f"Cleaning {source_path} to {target_path}")
-
-        # Select, order, and rename columns
-        columns = {
-            "recs": "category",
-            "gm_naam": "municipality",
-            "regio": "name",
-            "a_inw": "population",
-            "bev_dich": "population_density",
-            "a_woning": "house_count",
-            "g_woz": "house_price",
-            "p_leegsw": "available_house_percentage",
-            "g_wodief": "theft",
-            "g_vernoo": "destruction",
-            "g_gewsek": "violence",
-            "g_afs_hp": "doctor_distance",
-            "g_afs_gs": "market_distance",
-            "g_afs_kv": "daycare_distance",
-            "g_afs_sc": "school_distance",
-            "g_3km_sc": "school_count",
-            "ste_mvs": "urbanity",
-            "ste_oad": "house_density",
-        }
+        source_path = download_directory / (identifier + ".csv")
         data_frame = pandas.read_csv(source_path)
-        data_frame = data_frame[columns.keys()]
-        data_frame.rename(columns=columns, inplace=True)
+        # data_frame.to_csv(target_path, index=False)
 
-        # Translate dutch words
-        translations = {
-            "Land": "country",
-            "Gemeente": "municipality",
-            "Wijk": "district",
-            "Buurt": "neighbourhood",
-        }
-        data_frame.replace(translations.keys(), translations.values(), inplace=True)
 
-        # Store clean data frame
+def join(identifiers: [str]):
+    """Join a group of datasets together into a single group,"""
+
+    # Prepare clean directory
+    clean_directory = Path("data/cleaned")
+    clean_directory.mkdir(parents=True, exist_ok=True)
+
+    # Prepare join directory
+    join_directory = Path("data/joined")
+    join_directory.mkdir(parents=True, exist_ok=True)
+
+    # Check if datasets were previously joined
+    target_path = join_directory / ("_".join(identifiers) + ".csv")
+    if not target_path.exists():
+
+        def load(identifier: str) -> pandas.DataFrame:
+            """Load the dataset associated with the given identifier."""
+            source_path = clean_directory / (identifier + ".csv")
+            return pandas.read_csv(source_path)
+
+        def merge(accumulator: pandas.DataFrame, other: pandas.DataFrame) -> pandas.DataFrame:
+            """Merge the given datasets into a single dataset via outer joining on shared columns."""
+            columns = list(set(accumulator.columns).intersection(set(other.columns)))
+            return pandas.merge(accumulator, other, how="outer", on=columns)
+
+        # Join datasets
+        data_frame = reduce(merge, map(load, identifiers))
+        print(data_frame)
         data_frame.to_csv(target_path, index=False)
 
 
-def main():
-    """Download, convert, clean, and pre-process online resources for future visualisation."""
-
-    # Prepare data directory
-    data_dir = Path("data")
-    data_dir.mkdir(parents=True, exist_ok=True)
-
-    # API for data collection
-    # https://www.cbs.nl/nl-nl/onze-diensten/open-data/statline-als-open-data
-
-    # All data!
-    # https://opendata.cbs.nl/statline/portal.html?_catalog=CBS&_la=nl&tableId=84718NED&_theme=401
-
-    # Download online resources
-    cbs = "https://www.cbs.nl/-/media/cbs/dossiers/"
-    urls = [
-        cbs + "nederland-regionaal/wijk-en-buurtstatistieken/_exel/kwb-2019.xls",
-        cbs + "nederland-regionaal/wijk-en-buurtstatistieken/wijkbuurtkaart_2019_v2.zip"
-    ]
-    download_dir = data_dir / "downloaded"
-    download_dir.mkdir(parents=True, exist_ok=True)
-    download_all(urls, download_dir)
-
-    # Convert all resources to CSV files
-    convert_dir = data_dir / "converted"
-    convert_dir.mkdir(parents=True, exist_ok=True)
-    convert_all(download_dir, convert_dir)
-
-    # Clean
-    clean_dir = data_dir / "cleaned"
-    clean_dir.mkdir(parents=True, exist_ok=True)
-    clean_kwb(convert_dir / "kwb-2019.csv", clean_dir / "kwb-2019.csv")
-
-    # Pre-process
-    # Actual factors to present
-
-    # Split
-    # Country, municipalities, districts, neighbourhoods.
-    # Can we create provinces from this data?
+def prepare():
+    """Download, clean, join, and order datasets."""
+    identifiers = ["84583NED", "84718NED"]
+    for identifier in identifiers:
+        download(identifier)
+        clean(identifier)
+    # join(identifiers)
 
 
 if __name__ == '__main__':
-    main()
+    prepare()
