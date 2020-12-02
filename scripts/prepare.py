@@ -1,5 +1,4 @@
 import cbsodata
-import numpy
 import pandas
 
 from functools import reduce
@@ -43,13 +42,18 @@ def clean(identifier: str):
         source_path = download_directory / (identifier + ".csv")
         data_frame = pandas.read_csv(source_path)
 
+        # Remove whitespace
+        for column in data_frame.columns:
+            if pandas.api.types.is_string_dtype(data_frame[column]):
+                data_frame[column] = data_frame[column].str.strip()
+
         # Remove and rename columns
         columns = {
 
             # General
-            "WijkenEnBuurten": "name",
             "Gemeentenaam_1": "municipality",
             "SoortRegio_2": "type",
+            "WijkenEnBuurten": "name",
             "Codering_3": "code",
 
             # Price
@@ -78,6 +82,15 @@ def clean(identifier: str):
 
         data_frame = data_frame[columns.keys()]
         data_frame.rename(columns=columns, inplace=True)
+
+        # Rename types
+        translations = {
+            "Land": "country",
+            "Gemeente": "municipality",
+            "Wijk": "district",
+            "Buurt": "neighbourhood",
+        }
+        data_frame["type"].replace(translations.keys(), translations.values(), inplace=True)
 
         # Store clean dataset
         data_frame.to_csv(target_path, index=False)
@@ -131,7 +144,7 @@ def preprocess(identifiers: [str]):
         source_path = join_directory / ("_".join(identifiers) + ".csv")
         data_frame = pandas.read_csv(source_path)
 
-        # TODO: Ignore/fill missing values
+        # TODO: Fill missing values
 
         # Price
         data_frame["price"] = 1.0 / data_frame["house_worth"]
@@ -168,6 +181,8 @@ def preprocess(identifiers: [str]):
         data_frame["education"] = 1.0 / data_frame["distance_to_school"]
         data_frame["education"].fillna(1)
         data_frame.drop(columns=["distance_to_school"], inplace=True)
+
+        # TODO: Normalize per (sub)category
 
         # Normalize data
         for column in data_frame.columns:

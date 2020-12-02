@@ -10,7 +10,7 @@
     <script src="https://d3js.org/d3.v6.min.js"></script>
 </head>
 <body>
-    <svg id="map"></svg>
+    <div id="map"></div>
     <div id="options">
         <div id="preferences">
             <h1>Preferences</h1>
@@ -28,7 +28,19 @@
                     <td><input id="safety" type="range" min="-1.0" max="1.0" step="0.01" value="0.0"></td>
                 </tr>
                 <tr>
+                    <td><label>Public Transit</label></td>
+                    <td><input id="transit" type="range" min="-1.0" max="1.0" step="0.01" value="0.0"></td>
+                </tr>
+                <tr>
+                    <td><label>Healthcare</label></td>
+                    <td><input id="health" type="range" min="-1.0" max="1.0" step="0.01" value="0.0"></td>
+                </tr>
+                <tr>
                     <td><label>Air Quality</label></td>
+                    <td><input id="air" type="range" min="-1.0" max="1.0" step="0.01" value="0.0"></td>
+                </tr>
+                <tr>
+                    <td><label>Education</label></td>
                     <td><input id="air" type="range" min="-1.0" max="1.0" step="0.01" value="0.0"></td>
                 </tr>
             </table>
@@ -38,7 +50,11 @@
             <table>
                 <tr>
                     <td><input id="" type="checkbox"></td>
-                    <td>School</td>
+                    <td>Primary School</td>
+                </tr>
+                <tr>
+                    <td><input id="" type="checkbox"></td>
+                    <td>Secondary School</td>
                 </tr>
                 <tr>
                     <td><input id="" type="checkbox"></td>
@@ -46,7 +62,15 @@
                 </tr>
                 <tr>
                     <td><input id="" type="checkbox"></td>
-                    <td>Market</td>
+                    <td>Hospital</td>
+                </tr>
+                <tr>
+                    <td><input id="" type="checkbox"></td>
+                    <td>Grocery Store</td>
+                </tr>
+                <tr>
+                    <td><input id="" type="checkbox"></td>
+                    <td>Library</td>
                 </tr>
             </table>
         </div>
