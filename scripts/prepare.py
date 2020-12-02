@@ -144,7 +144,7 @@ def preprocess(identifiers: [str]):
         source_path = join_directory / ("_".join(identifiers) + ".csv")
         data_frame = pandas.read_csv(source_path)
 
-        # TODO: Fill missing values
+        # TODO: Fill in missing values
 
         # Price
         data_frame["price"] = 1.0 / data_frame["house_worth"]
@@ -182,15 +182,6 @@ def preprocess(identifiers: [str]):
         data_frame["education"].fillna(1)
         data_frame.drop(columns=["distance_to_school"], inplace=True)
 
-        # TODO: Normalize per (sub)category
-
-        # Normalize data
-        for column in data_frame.columns:
-            if pandas.api.types.is_numeric_dtype(data_frame[column]):
-                min_value = data_frame[column].min()
-                max_value = data_frame[column].max()
-                data_frame[column] = (data_frame[column] - min_value) / (max_value - min_value)
-
         # Store clean dataset
         data_frame.to_csv(target_path, index=False)
 
@@ -212,6 +203,14 @@ def split(identifiers: [str]):
         # Load dataset
         source_path = preprocess_directory / ("_".join(identifiers) + ".csv")
         data_frame = pandas.read_csv(source_path)
+
+        # Normalize each subcategory
+        # # Normalize data
+        # for column in data_frame.columns:
+        #     if pandas.api.types.is_numeric_dtype(data_frame[column]):
+        #         min_value = data_frame[column].min()
+        #         max_value = data_frame[column].max()
+        #         data_frame[column] = (data_frame[column] - min_value) / (max_value - min_value)
 
 
 def prepare():
