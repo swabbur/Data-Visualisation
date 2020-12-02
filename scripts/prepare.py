@@ -1,5 +1,6 @@
-import pandas
 import cbsodata
+import numpy
+import pandas
 
 from functools import reduce
 from pathlib import Path
@@ -37,9 +38,49 @@ def clean(identifier: str):
     # Check if dataset was previously cleaned
     target_path = clean_directory / (identifier + ".csv")
     if not target_path.exists():
+
+        # Clean dataset
         source_path = download_directory / (identifier + ".csv")
         data_frame = pandas.read_csv(source_path)
-        # data_frame.to_csv(target_path, index=False)
+
+        # Remove and rename columns
+        columns = {
+
+            # General
+            "WijkenEnBuurten": "name",
+            "Gemeentenaam_1": "municipality",
+            "SoortRegio_2": "type",
+            "Codering_3": "code",
+
+            # Price
+            "GemiddeldeWoningwaarde_35": "house_worth",
+
+            # Urbanity
+            "AantalInwoners_5": "inhabitants",
+            "HuishoudensTotaal_28": "households",
+            "Bevolkingsdichtheid_33": "density",
+            "MateVanStedelijkheid_105": "urbanity",
+
+            # Safety
+            "TotaalDiefstalUitWoningSchuurED_78": "theft",
+            "VernielingMisdrijfTegenOpenbareOrde_79": "destruction",
+            "GeweldsEnSeksueleMisdrijven_80": "violence",
+
+            # Healthcare
+            "AfstandTotHuisartsenpraktijk_5": "distance_to_general_practitioner",
+            "AfstandTotHuisartsenpost_9": "distance_to_general_practice",
+            "AfstandTotZiekenhuis_11": "distance_to_hospital",
+
+            # Education
+            "AfstandTotSchool_98": "distance_to_school",
+        }
+        columns = {key: columns[key] for key in data_frame.columns if key in columns}
+
+        data_frame = data_frame[columns.keys()]
+        data_frame.rename(columns=columns, inplace=True)
+
+        # Store clean dataset
+        data_frame.to_csv(target_path, index=False)
 
 
 def join(identifiers: [str]):
@@ -69,8 +110,93 @@ def join(identifiers: [str]):
 
         # Join datasets
         data_frame = reduce(merge, map(load, identifiers))
-        print(data_frame)
         data_frame.to_csv(target_path, index=False)
+
+
+def preprocess(identifiers: [str]):
+    """Preprocess joined dataset."""
+
+    # Prepare join directory
+    join_directory = Path("data/joined")
+    join_directory.mkdir(parents=True, exist_ok=True)
+
+    # Prepare preprocess directory
+    preprocess_directory = Path("data/preprocessed")
+    preprocess_directory.mkdir(parents=True, exist_ok=True)
+
+    target_path = preprocess_directory / ("_".join(identifiers) + ".csv")
+    if not target_path.exists():
+
+        # Load dataset
+        source_path = join_directory / ("_".join(identifiers) + ".csv")
+        data_frame = pandas.read_csv(source_path)
+
+        # TODO: Ignore/fill missing values
+
+        # Price
+        data_frame["price"] = 1.0 / data_frame["house_worth"]
+        data_frame["price"].fillna(1)
+        data_frame.drop(columns=["house_worth"], inplace=True)
+
+        # Urbanity
+        data_frame["urbanity"] = data_frame["urbanity"] \
+            * data_frame["density"] \
+            * (data_frame["inhabitants"] + data_frame["households"])
+        data_frame["urbanity"].fillna(0)
+        data_frame.drop(columns=["inhabitants", "households", "density"], inplace=True)
+
+        # Safety
+        data_frame["safety"] = 1.0 / (data_frame["theft"] + data_frame["destruction"] + data_frame["violence"])
+        data_frame["safety"].fillna(1)
+        data_frame.drop(columns=["theft", "destruction", "violence"], inplace=True)
+
+        # Healthcare
+        healthcare_columns = [
+            "distance_to_general_practitioner",
+            "distance_to_general_practice",
+            "distance_to_hospital"
+        ]
+
+        def weighted_minimum(row):
+            return min(4 * row[0], 2 * row[1], 1 * row[2])
+
+        data_frame["healthcare"] = 1.0 / data_frame[healthcare_columns].apply(weighted_minimum, axis=1)
+        data_frame["healthcare"].fillna(1)
+        data_frame.drop(columns=healthcare_columns, inplace=True)
+
+        # Education
+        data_frame["education"] = 1.0 / data_frame["distance_to_school"]
+        data_frame["education"].fillna(1)
+        data_frame.drop(columns=["distance_to_school"], inplace=True)
+
+        # Normalize data
+        for column in data_frame.columns:
+            if pandas.api.types.is_numeric_dtype(data_frame[column]):
+                min_value = data_frame[column].min()
+                max_value = data_frame[column].max()
+                data_frame[column] = (data_frame[column] - min_value) / (max_value - min_value)
+
+        # Store clean dataset
+        data_frame.to_csv(target_path, index=False)
+
+
+def split(identifiers: [str]):
+    """Preprocess joined dataset."""
+
+    # Prepare preprocess directory
+    preprocess_directory = Path("data/preprocessed")
+    preprocess_directory.mkdir(parents=True, exist_ok=True)
+
+    # Prepare join directory
+    split_directory = Path("data/split")
+    split_directory.mkdir(parents=True, exist_ok=True)
+
+    target_directory = split_directory / "_".join(identifiers)
+    if not target_directory.exists():
+
+        # Load dataset
+        source_path = preprocess_directory / ("_".join(identifiers) + ".csv")
+        data_frame = pandas.read_csv(source_path)
 
 
 def prepare():
@@ -79,7 +205,9 @@ def prepare():
     for identifier in identifiers:
         download(identifier)
         clean(identifier)
-    # join(identifiers)
+    join(identifiers)
+    preprocess(identifiers)
+    split(identifiers)
 
 
 if __name__ == '__main__':
