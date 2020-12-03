@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Find a house!</title>
+    <title>Real Estate Map</title>
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"> 
     <link rel="stylesheet" href="style/layout.css">
@@ -31,6 +31,7 @@
     </div>
     <script>
 
+        // Create preference inputs
         const preferences = [
             "price", 
             "urbanity",
@@ -41,19 +42,20 @@
             "transit",
         ]
 
-        const requirements = [
-            "daycare",
-            "grocery_store",
-            "pharmacy",
-            "library",
-        ]
-
         preferences.forEach(preference => {
             $('#preferences').append(create_row([
                 create_label(preference),
                 create_slider(preference)
             ]));
         });
+
+        // Create requirement inputs
+        const requirements = [
+            "daycare",
+            "grocery_store",
+            "pharmacy",
+            "library",
+        ]
 
         requirements.forEach(requirement => {
             $('#requirements').append(create_row([
@@ -62,7 +64,7 @@
             ]));
         });
 
-        // Render some fun colors
+        // Dynamically color background
         time = 0.0
         setInterval(() => {
             var color = "black"
@@ -76,9 +78,9 @@
             time %= 2.0
         }, 20);
 
-        // Render elements
+        // Render Map
         function render(width, height) {
-            // TODO: Render Map
+            // ...
         }
 
         // Resize components
@@ -91,7 +93,7 @@
                 width: width,
                 height: height,
             });
-            
+
             $("#colors").css({
                 width: $("#options").width() - 2,
             });
