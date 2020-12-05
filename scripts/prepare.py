@@ -16,6 +16,8 @@ def download(identifier: str):
     file_path = download_directory / (identifier + ".csv")
     if not file_path.exists():
 
+        print(f"Downloading \"{identifier}\" to \"{file_path}\".")
+
         # Download dataset
         data = cbsodata.get_data(identifier)
         data_frame = pandas.DataFrame(data)
@@ -37,6 +39,8 @@ def clean(identifier: str):
     # Check if dataset was previously cleaned
     target_path = clean_directory / (identifier + ".csv")
     if not target_path.exists():
+
+        print(f"Cleaning \"{identifier}\" to \"{target_path}\".")
 
         # Clean dataset
         source_path = download_directory / (identifier + ".csv")
@@ -111,6 +115,9 @@ def join(identifiers: [str]):
     target_path = join_directory / ("_".join(identifiers) + ".csv")
     if not target_path.exists():
 
+        identifier_names = ", ".join(map(lambda identifier: f"\"{identifier}\"", identifiers))
+        print(f"Joining {identifier_names} to \"{target_path}\".")
+
         def load(identifier: str) -> pandas.DataFrame:
             """Load the dataset associated with the given identifier."""
             source_path = clean_directory / (identifier + ".csv")
@@ -143,6 +150,8 @@ def preprocess(identifiers: [str]):
         # Load dataset
         source_path = join_directory / ("_".join(identifiers) + ".csv")
         data_frame = pandas.read_csv(source_path)
+
+        print(f"Cleaning \"{source_path}\" to \"{target_path}\".")
 
         # TODO: Fill in missing values
 
@@ -199,6 +208,8 @@ def split(identifiers: [str]):
 
     target_directory = split_directory / "_".join(identifiers)
     if not target_directory.exists():
+
+        target_directory.mkdir(exist_ok=True, parents=True)
 
         # Load dataset
         source_path = preprocess_directory / ("_".join(identifiers) + ".csv")
