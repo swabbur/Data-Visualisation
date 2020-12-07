@@ -220,6 +220,9 @@ def split(identifiers: [str]):
         def select(region_range):
             region_row = data_frame.iloc[region_range[0]]
             region_data_frame = data_frame.iloc[region_range[0]:region_range[1]]
+            region = region_row["code"]
+            with open(target_directory / (region + ".json"), "w") as region_file:
+                json.dump(region_row.to_dict(), region_file)
             return region_row["code"], region_data_frame, region_range[1]
 
         def iterate(parent_data_frame, parent_end, region_type):
@@ -239,8 +242,8 @@ def split(identifiers: [str]):
 
         countries = collect(data_frame, -1, ["country", "municipality", "district", "neighbourhood"])
 
-        with open(target_directory / "hierarchy.json", "w") as file:
-            json.dump(countries, file)
+        with open(target_directory / "hierarchy.json", "w") as hierarchy_file:
+            json.dump(countries, hierarchy_file)
 
         # Normalize each subcategory
         # # Normalize data
