@@ -1,4 +1,5 @@
 import cbsodata
+import json
 import pandas
 
 from functools import reduce
@@ -154,6 +155,7 @@ def preprocess(identifiers: [str]):
         print(f"Cleaning \"{source_path}\" to \"{target_path}\".")
 
         # TODO: Fill in missing values
+        # TODO: Improve combinations
 
         # Price
         data_frame["price"] = 1.0 / data_frame["house_worth"]
@@ -214,6 +216,31 @@ def split(identifiers: [str]):
         # Load dataset
         source_path = preprocess_directory / ("_".join(identifiers) + ".csv")
         data_frame = pandas.read_csv(source_path)
+
+        def select(region_range):
+            region_row = data_frame.iloc[region_range[0]]
+            region_data_frame = data_frame.iloc[region_range[0]:region_range[1]]
+            return region_row["code"], region_data_frame, region_range[1]
+
+        def iterate(parent_data_frame, parent_end, region_type):
+            region_indices = parent_data_frame.index[parent_data_frame["type"] == region_type].tolist()
+            if len(region_indices) > 0:
+                region_ranges = zip(region_indices, region_indices[1:] + [parent_end])
+                return map(select, region_ranges)
+            return []
+
+        def collect(parent_data_frame, parent_end, region_types):
+            if region_types:
+                regions = {}
+                for region, region_data_frame, region_end in iterate(parent_data_frame, parent_end, region_types[0]):
+                    regions[region] = collect(region_data_frame, region_end, region_types[1:])
+                return regions
+            return {}
+
+        countries = collect(data_frame, -1, ["country", "municipality", "district", "neighbourhood"])
+
+        with open(target_directory / "hierarchy.json", "w") as file:
+            json.dump(countries, file)
 
         # Normalize each subcategory
         # # Normalize data
