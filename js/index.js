@@ -1,14 +1,15 @@
-const width = 1080 ;
-const height = 720;
+const width = 1600 ;
+const height = 900;
 var promises = [];
-var files = ["https://cartomap.github.io/nl/wgs84/provincie_2019.topojson",
+var files = [
+//"https://cartomap.github.io/nl/wgs84/provincie_2019.topojson",
 "https://cartomap.github.io/nl/wgs84/gemeente_2019.topojson",
-"buurt1.json"
+"buurt.json"
 ]
 
 function reset() {
-    d3.selectAll('.provinces').attr("visibility", "visible")
-    d3.selectAll('.gemeente').attr("visibility", "hidden")
+    // d3.selectAll('.provinces').attr("visibility", "visible")
+    d3.selectAll('.gemeente').attr("visibility", "visible")
     d3.selectAll('.buurt').attr("visibility", "hidden")
     d3.selectAll(path).transition().style("fill", null);
     svg.transition().duration(750).call(
@@ -41,7 +42,7 @@ files.forEach(function(url) {
 Promise.all(promises)
 .then(function(topology) {
     albersProjection
-    .fitExtent([[0, 0], [width, height]], topojson.feature(topology[0], topology[0].objects.provincie_2019))
+    .fitExtent([[0, 0], [width, height]], topojson.feature(topology[0], topology[0].objects.gemeente_2019))
 function handlemouseover(a,b){
   d3.select(this).transition().style("fill", "red");
 }
@@ -50,37 +51,37 @@ function handlemouseout(a,b){
   d3.select(this).transition().style("fill", "white");
 }
 
- let provinces = g.append("g")
-  .attr("class","provinces")
-  // .attr('visibility','hidden')
-      .attr("fill", "white")
-      .attr("stroke","black")
-      .attr("cursor", "pointer")
+//  let provinces = g.append("g")
+//   .attr("class","provinces")
+//   .attr('visibility','hidden')
+//       .attr("fill", "white")
+//       .attr("stroke","black")
+//       .attr("cursor", "pointer")
   
-    .selectAll("path")
-    .data(topojson.feature(topology[0], topology[0].objects.provincie_2019).features)
-    .join("path")
-      .on("click", clicked)
-      .on("mouseover",handlemouseover)
-      .on("mouseout",handlemouseout)
-      .attr("d", path)
-     .attr("id",(d)=>{
-        //  console.log(d)
-         return d.properties.FID
-     });
+//     .selectAll("path")
+//     .data(topojson.feature(topology[0], topology[0].objects.provincie_2019).features)
+//     .join("path")
+//       .on("click", clicked)
+//       .on("mouseover",handlemouseover)
+//       .on("mouseout",handlemouseout)
+//       .attr("d", path)
+//      .attr("id",(d)=>{
+//         //  console.log(d)
+//          return d.properties.FID
+//      });
      
-     provinces.append("title")
-     .text(d => d.properties.statnaam);
+    //  provinces.append("title")
+    //  .text(d => d.properties.statnaam);
 
 let gemeente = g.append("g")
-.attr('visibility','hidden')
+// .attr('visibility','hidden')
             .attr("class","gemeente")
          .attr("fill", "white")
          .attr('stroke','black')
          .attr("cursor", "pointer")
          
        .selectAll("path")
-       .data(topojson.feature(topology[1], topology[1].objects.gemeente_2019).features)
+       .data(topojson.feature(topology[0], topology[0].objects.gemeente_2019).features)
        .join("path")
          .on("click", clicked)
          .on("mouseover",handlemouseover)
@@ -100,7 +101,7 @@ let buurt = g.append("g")
             .attr('stroke','black')
             .attr("cursor", "pointer")
           .selectAll("path")
-          .data(topojson.feature(topology[2], topology[2].objects.buurt_2019).features)
+          .data(topojson.feature(topology[1], topology[1].objects.buurt_2019).features)
           .join("path")
             .on("click", clicked)
             .on("mouseover",handlemouseover)
@@ -121,32 +122,29 @@ const zoom = d3.zoom()
 .on("zoom", zoomed);
 
 function zoomed(event) {
-    // console.log(d3.zoomIdentity.k)
-    // console.log()
-    // const [[x0, y0], [x1, y1]] = path.bounds(d);
-    // let ans=Math.min(20, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height))
-    console.log(d3.zoomTransform(this).k)
-    if(d3.zoomTransform(this).k<3.5){
-      console.log('p')
-      // d3.selectAll('.gementee').attr("visibility", "visible")
-      d3.selectAll('.provinces')
-      .attr("visibility", "visible")
-      d3.selectAll('.gemeente')
-      .attr("visibility", "hidden")
-      d3.selectAll('.buurt')
-      .attr("visibility", "hidden")
-    }
-    else if (d3.zoomTransform(this).k>=3.5 && d3.zoomTransform(this).k<9.5){
-      d3.selectAll('.provinces')
-      .attr("visibility", "hidden")
+  
+    console.log(event)
+    // if(d3.zoomTransform(this).k<2.5){
+    //   console.log('p')
+    //   // d3.selectAll('.gementee').attr("visibility", "visible")
+    //   d3.selectAll('.provinces')
+    //   .attr("visibility", "visible")
+    //   d3.selectAll('.gemeente')
+    //   .attr("visibility", "hidden")
+    //   d3.selectAll('.buurt')
+    //   .attr("visibility", "hidden")
+    // }
+    if (d3.zoomTransform(this).k<5.5){
+      // d3.selectAll('.provinces')
+      // .attr("visibility", "hidden")
       d3.selectAll('.gemeente')
       .attr("visibility", "visible")
       d3.selectAll('.buurt')
       .attr("visibility", "hidden")
     }
-    else if (d3.zoomTransform(this).k>=9.5){
-      d3.selectAll('.provinces')
-      .attr("visibility", "hidden")
+    else if (d3.zoomTransform(this).k>=7.5){
+      // d3.selectAll('.provinces')
+      // .attr("visibility", "hidden")
       d3.selectAll('.gemeente')
       .attr("visibility", "hidden")
       d3.selectAll('.buurt')
@@ -163,8 +161,8 @@ function zoomed(event) {
     event.stopPropagation();
     // township.attr('display','block')
     // states=township
-    console.log(path.bounds(d))
-    d3.selectAll('provinces').transition().style("fill", null);
+    // console.log(event)
+    // d3.selectAll('provinces').transition().style("fill", null);
 
     // console.log(d)
 
@@ -172,9 +170,9 @@ function zoomed(event) {
     .on("end", ()=>{
         // a=d.properties.FID
           // d3.select("svg").remove();
-          console.log(d3.selectAll('g'))
+          // console.log(d3.selectAll('g'))
           
-console.log(this.class)
+// console.log(this.class)
         if(d.properties.rubriek=="gemeente"){
             d3.selectAll('.buurt')
             .attr("visibility", "visible")
@@ -211,7 +209,7 @@ console.log(this.class)
       zoom.transform,
       d3.zoomIdentity
       .translate(width / 2, height / 2)
-      .scale(Math.min(20, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
+      .scale(Math.min(40, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
       .translate(-(x0 + x1) / 2, -(y0 + y1) / 2),
     );
   } 
