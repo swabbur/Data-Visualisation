@@ -1,10 +1,10 @@
 import cbsodata
-import json
+import math
 import pandas
 
 from functools import reduce
 from pathlib import Path
-
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 def download(identifier: str):
     """Download a dataset from the CBS odata portal."""
@@ -22,7 +22,6 @@ def download(identifier: str):
         # Download dataset
         data = cbsodata.get_data(identifier)
         data_frame = pandas.DataFrame(data)
-        print(data_frame)
         data_frame.to_csv(file_path, index=False)
 
 
@@ -56,7 +55,6 @@ def clean(identifier: str):
         columns = {
 
             # General
-            "Gemeentenaam_1": "municipality",
             "SoortRegio_2": "type",
             "WijkenEnBuurten": "name",
             "Codering_3": "code",
@@ -65,15 +63,14 @@ def clean(identifier: str):
             "GemiddeldeWoningwaarde_35": "house_worth",
 
             # Urbanity
-            "AantalInwoners_5": "inhabitants",
-            "HuishoudensTotaal_28": "households",
             "Bevolkingsdichtheid_33": "density",
             "MateVanStedelijkheid_105": "urbanity",
 
             # Safety
-            "TotaalDiefstalUitWoningSchuurED_78": "theft",
-            "VernielingMisdrijfTegenOpenbareOrde_79": "destruction",
-            "GeweldsEnSeksueleMisdrijven_80": "violence",
+            # "AantalInwoners_5": "inhabitants",
+            # "TotaalDiefstalUitWoningSchuurED_78": "theft",
+            # "VernielingMisdrijfTegenOpenbareOrde_79": "destruction",
+            # "GeweldsEnSeksueleMisdrijven_80": "violence",
 
             # Healthcare
             "AfstandTotHuisartsenpraktijk_5": "distance_to_general_practitioner",
@@ -152,27 +149,50 @@ def preprocess(identifiers: [str]):
         source_path = join_directory / ("_".join(identifiers) + ".csv")
         data_frame = pandas.read_csv(source_path)
 
-        print(f"Cleaning \"{source_path}\" to \"{target_path}\".")
+        print(f"Preprocessing \"{source_path}\" to \"{target_path}\".")
 
-        # TODO: Fill in missing values
-        # TODO: Improve combinations
+        # Fill in missing values
+        region_types = ["country", "municipality", "district", "neighbourhood"]
+
+        def fill_top_down(column):
+            values = list()
+            for index, row in data_frame.iterrows():
+                level = region_types.index(row["type"])
+                values = values[:level]
+                value = row[column]
+                if math.isnan(value):
+                    value = values[-1]
+                data_frame.loc[index, column] = value
+                values.append(value)
+
+        fill_top_down("house_worth")
+        fill_top_down("density")
+        fill_top_down("urbanity")
+        fill_top_down("distance_to_general_practitioner")
+        fill_top_down("distance_to_general_practice")
+        fill_top_down("distance_to_hospital")
+        fill_top_down("distance_to_school")
+
+        # Normalize columns
+        for column in data_frame.columns:
+            if pandas.api.types.is_numeric_dtype(data_frame[column]):
+                min_value = data_frame[column].min()
+                max_value = data_frame[column].max()
+                data_frame[column] = (data_frame[column] - min_value) / (max_value - min_value)
+
+        # Combine data columns
 
         # Price
-        data_frame["price"] = 1.0 / data_frame["house_worth"]
-        data_frame["price"].fillna(1)
-        data_frame.drop(columns=["house_worth"], inplace=True)
+        data_frame.rename(columns={"house_worth": "price"}, inplace=True)
 
         # Urbanity
-        data_frame["urbanity"] = data_frame["urbanity"] \
-            * data_frame["density"] \
-            * (data_frame["inhabitants"] + data_frame["households"])
-        data_frame["urbanity"].fillna(0)
-        data_frame.drop(columns=["inhabitants", "households", "density"], inplace=True)
+        data_frame["urbanity"] = data_frame["urbanity"] * data_frame["density"]
+        data_frame.drop(columns=["density"], inplace=True)
 
         # Safety
-        data_frame["safety"] = 1.0 / (data_frame["theft"] + data_frame["destruction"] + data_frame["violence"])
-        data_frame["safety"].fillna(1)
-        data_frame.drop(columns=["theft", "destruction", "violence"], inplace=True)
+        # data_frame["safety"] = 1.0 / (data_frame["theft"] + data_frame["destruction"] + data_frame["violence"])
+        # data_frame["safety"].fillna(1)
+        # data_frame.drop(columns=["theft", "destruction", "violence"], inplace=True)
 
         # Healthcare
         healthcare_columns = [
@@ -182,16 +202,20 @@ def preprocess(identifiers: [str]):
         ]
 
         def weighted_minimum(row):
-            return min(4 * row[0], 2 * row[1], 1 * row[2])
+            return 1.0 - min(4 * row[0], 2 * row[1], 1 * row[2])
 
-        data_frame["healthcare"] = 1.0 / data_frame[healthcare_columns].apply(weighted_minimum, axis=1)
-        data_frame["healthcare"].fillna(1)
+        data_frame["healthcare"] = data_frame[healthcare_columns].apply(weighted_minimum, axis=1)
         data_frame.drop(columns=healthcare_columns, inplace=True)
 
         # Education
-        data_frame["education"] = 1.0 / data_frame["distance_to_school"]
-        data_frame["education"].fillna(1)
+        data_frame["education"] = 1.0 - data_frame["distance_to_school"]
         data_frame.drop(columns=["distance_to_school"], inplace=True)
+
+        # Standardize columns
+        for column in data_frame.columns:
+            if pandas.api.types.is_numeric_dtype(data_frame[column]):
+                scaler = StandardScaler()
+                data_frame[[column]] = scaler.fit_transform(data_frame[[column]])
 
         # Store clean dataset
         data_frame.to_csv(target_path, index=False)
@@ -211,47 +235,35 @@ def split(identifiers: [str]):
     target_directory = split_directory / "_".join(identifiers)
     if not target_directory.exists():
 
+        print(f"Splitting datasets to \"{target_directory}\".")
+
         target_directory.mkdir(exist_ok=True, parents=True)
 
         # Load dataset
         source_path = preprocess_directory / ("_".join(identifiers) + ".csv")
         data_frame = pandas.read_csv(source_path)
 
-        def select(region_range):
+        # Split and store dataset
+        def select_region(region_range):
             region_row = data_frame.iloc[region_range[0]]
             region_data_frame = data_frame.iloc[region_range[0]:region_range[1]]
-            region = region_row["code"]
-            with open(target_directory / (region + ".json"), "w") as region_file:
-                json.dump(region_row.to_dict(), region_file)
             return region_row["code"], region_data_frame, region_range[1]
 
-        def iterate(parent_data_frame, parent_end, region_type):
+        def iterate_region(parent_data_frame, parent_end, region_type):
             region_indices = parent_data_frame.index[parent_data_frame["type"] == region_type].tolist()
             if len(region_indices) > 0:
                 region_ranges = zip(region_indices, region_indices[1:] + [parent_end])
-                return map(select, region_ranges)
+                return map(select_region, region_ranges)
             return []
 
-        def collect(parent_data_frame, parent_end, region_types):
-            if region_types:
-                regions = {}
-                for region, region_data_frame, region_end in iterate(parent_data_frame, parent_end, region_types[0]):
-                    regions[region] = collect(region_data_frame, region_end, region_types[1:])
-                return regions
-            return {}
+        def split_and_store(parent_data_frame, parent_end, region_types):
+            if len(region_types) > 1:
+                for region, region_data_frame, region_end in iterate_region(parent_data_frame, parent_end, region_types[0]):
+                    split_and_store(region_data_frame, region_end, region_types[1:])
+                    subregion_data_frame = region_data_frame[region_data_frame["type"] == region_types[1]]
+                    subregion_data_frame.to_csv(target_directory / (region + ".csv"), index=False)
 
-        countries = collect(data_frame, -1, ["country", "municipality", "district", "neighbourhood"])
-
-        with open(target_directory / "hierarchy.json", "w") as hierarchy_file:
-            json.dump(countries, hierarchy_file)
-
-        # Normalize each subcategory
-        # # Normalize data
-        # for column in data_frame.columns:
-        #     if pandas.api.types.is_numeric_dtype(data_frame[column]):
-        #         min_value = data_frame[column].min()
-        #         max_value = data_frame[column].max()
-        #         data_frame[column] = (data_frame[column] - min_value) / (max_value - min_value)
+        split_and_store(data_frame, -1, ["country", "municipality", "district", "neighbourhood"])
 
 
 def prepare():
@@ -259,6 +271,7 @@ def prepare():
     identifiers = ["84583NED", "84718NED"]
     for identifier in identifiers:
         download(identifier)
+    for identifier in identifiers:
         clean(identifier)
     join(identifiers)
     preprocess(identifiers)
