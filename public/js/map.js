@@ -1,5 +1,5 @@
-var width = 500;
-var height = 500;
+var width = 720;
+var height = 960;
 
 
 // Create SVG
@@ -27,10 +27,15 @@ const projection = d3.geoAlbers()
 const path = d3.geoPath()
     .projection(projection);
 
+
+
+// Add resizing
+
 function resize_map(width, height) {
     width = width;
     height = height;
     svg.attr("viewBox", [0, 0, width, height]);
+    reset();
 }
 
 
