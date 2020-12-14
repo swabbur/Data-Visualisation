@@ -4,7 +4,7 @@ var promises = [];
 var files = [
 //"https://cartomap.github.io/nl/wgs84/provincie_2019.topojson",
 "https://cartomap.github.io/nl/wgs84/gemeente_2019.topojson",
-"buurt.json"
+"data/geo.json"
 ]
 
 function reset() {
@@ -20,7 +20,7 @@ function reset() {
   }
 
   
-const svg = d3.select("body").append("svg")   
+const svg = d3.select("#map").append("svg")   
     .attr("viewBox", [0, 0, width, height])
     .on("click", reset);
     
