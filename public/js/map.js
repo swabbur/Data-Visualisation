@@ -1,5 +1,5 @@
-const width = 500;
-const height = 500;
+var width = 500;
+var height = 500;
 
 
 // Create SVG
@@ -17,7 +17,6 @@ function reset() {
 }
 
 const svg = d3.select("#map").append("svg")
-    .attr("viewBox", [0, 0, width, height])
     .on("click", reset);
 
 const group = svg.append("g");
@@ -29,7 +28,11 @@ const projection = d3.geoAlbers()
 const path = d3.geoPath()
     .projection(projection);
 
-
+function resize_map(width, height) {
+    width = width;
+    height = height;
+    svg.attr("viewBox", [0, 0, width, height]);
+}
 
 // Add zoom functionality
 
