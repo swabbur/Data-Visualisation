@@ -5,7 +5,6 @@ var height = 500;
 // Create SVG
 
 function reset() {
-    // d3.selectAll('.provinces').attr("visibility", "visible")
     d3.selectAll('.gemeente').attr("visibility", "visible")
     d3.selectAll('.buurt').attr("visibility", "hidden")
     d3.selectAll(path).transition().style("fill", null);
@@ -34,30 +33,18 @@ function resize_map(width, height) {
     svg.attr("viewBox", [0, 0, width, height]);
 }
 
+
+
 // Add zoom functionality
 
 function zoomed(event) {
 
-    // if(d3.zoomTransform(this).k<2.5){
-    //   // d3.selectAll('.gementee')
-    //   //   .attr("visibility", "visible")
-    //   d3.selectAll('.provinces')
-    //     .attr("visibility", "visible")
-    //   d3.selectAll('.gemeente')
-    //     .attr("visibility", "hidden")
-    //   d3.selectAll('.buurt')
-    //     .attr("visibility", "hidden")
-    // } else 
     if (d3.zoomTransform(this).k < 5.5) {
-        // d3.selectAll('.provinces')
-        //   .attr("visibility", "hidden")
         d3.selectAll('.gemeente')
             .attr("visibility", "visible")
         d3.selectAll('.buurt')
             .attr("visibility", "hidden")
     } else if (d3.zoomTransform(this).k >= 7.5) {
-        // d3.selectAll('.provinces')
-        //   .attr("visibility", "hidden")
         d3.selectAll('.gemeente')
             .attr("visibility", "hidden")
         d3.selectAll('.buurt')
@@ -86,9 +73,10 @@ function clicked(event, d) {
 
     // township.attr('display','block')
     // states = township
-    // d3.selectAll('provinces').transition().style("fill", null);
 
-    d3.select(this).transition().style("fill", "null")
+    d3.select(this)
+        .transition()
+        .style("fill", "null")
         .on("end", () => {
 
             // a = d.properties.FID
@@ -115,6 +103,7 @@ function clicked(event, d) {
             // d3.selectAll('.township').attr("visibility", "visible")
             // d3.selectAll('.region').attr("visibility", "hidden")
             // }
+
             // township.attr('display','block')
             // d3.select('#'+a).style('display','none'  )
             // d3.selectAll("path").style('display', function(d){ 
@@ -123,12 +112,13 @@ function clicked(event, d) {
             //     })
         });
 
-    svg.transition().duration(500).call(
+    const zoomIdentity = d3.zoomIdentity
+        .translate(width / 2, height / 2)
+        .scale(Math.min(40, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
+        .translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
+    svg.transition().call(
         zoom.transform,
-        d3.zoomIdentity
-            .translate(width / 2, height / 2)
-            .scale(Math.min(40, 0.9 / Math.max((x1 - x0) / width, (y1 - y0) / height)))
-            .translate(-(x0 + x1) / 2, -(y0 + y1) / 2),
+        zoomIdentity
     );
 }
 
@@ -149,29 +139,7 @@ function update() {
             .style("fill", d3.interpolateMagma(0.5));
     }
 
-    // let provinces = g.append("g")
-    //   .attr("class","provinces")
-    //   .attr('visibility','hidden')
-    //   .attr("fill", "white")
-    //   .attr("stroke","black")
-    //   .attr("cursor", "pointer")
-
-    //   .selectAll("path")
-    //   .data(topojson.feature(topology[0], topology[0].objects.provincie_2019).features)
-    //   .join("path")
-    //     .on("click", clicked)
-    //     .on("mouseover",handlemouseover)
-    //     .on("mouseout",handlemouseout)
-    //     .attr("d", path)
-    //     attr("id",(d)=>{
-    //       return d.properties.FID
-    //     });
-
-    //  provinces.append("title")
-    //  .text(d => d.properties.statnaam);
-
     let gemeente = group.append("g")
-        // .attr('visibility','hidden')
         .attr("class", "gemeente")
         .attr("fill", d3.interpolateMagma(0.5))
         .attr('stroke', 'black')
