@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real Estate Map</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="style/layout.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="js/options.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="options">
+        <div>
+            <h1>Preferences</h1>
+            <table id="preferences"></table>
+        </div>
+        <div>
+            <h1>Requirements</h1>
+            <table id="requirements"></table>
+        </div>
+        <div id="legend">
+            <h1>Legend</h1>
+            <img id="colors" src="img/magma.png">
+        </div>
+        <div id="copyright">
+            © Kadaster / Centraal Bureau voor de Statistiek, 2020
+        </div>
+    </div>
+    <script>
+
+        // Create preference inputs
+        const preferences = [
+            "price", 
+            "urbanity",
+            // "safety", 
+            "healthcare",
+            "education", 
+            // "environment",
+            // "transit",
+        ]
+
+        preferences.forEach(preference => {
+            $('#preferences').append(create_row([
+                create_label(preference),
+                create_slider(preference)
+            ]));
+        });
+
+        // Create requirement inputs
+        const requirements = [
+            "daycare",
+            "grocery_store",
+            "pharmacy",
+            "library",
+        ]
+
+        requirements.forEach(requirement => {
+            $('#requirements').append(create_row([
+                create_checkbox(requirement),
+                create_label(requirement)
+            ]));
+        });
+
+        // Dynamically color background
+        time = 0.0
+        setInterval(() => {
+            var color = "black"
+            if (time < 1.0) {
+                color = d3.interpolateMagma(1.0 - time);
+            } else {
+                color = d3.interpolateMagma(time - 1.0);
+            }
+            $("#map").css("background-color", color);
+            time += 0.005
+            time %= 2.0
+        }, 20);
+
+        // Render Map
+        function render(width, height) {
+            // ...
+        }
+
+        // Resize components
+        function resize() {
+
+            const width = $("body").width() - $("#options").width() - 64;
+            const height = Math.max($(window).height(), ($("#options").height() + 64));
+            
+            $("#map").css({
+                width: width,
+                height: height,
+            });
+
+            $("#colors").css({
+                width: $("#options").width() - 2,
+            });
+            
+            $("#copyright").css({
+                width: $("#options").width(),
+            })
+            
+            render(width, height);
+        }
+        $(window).on("resize", resize);
+        resize();
+        
+    </script>
+</body>
+</html>
