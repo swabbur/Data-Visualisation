@@ -13,7 +13,7 @@ cd public
 python3 ../scripts/prepare.py
 ```
 
-All data, including the intermediary formats, are stored in the folder `public/data` folder.
+All data, including the intermediary formats, are stored in the folder `public/data`.
 
 ### Viewing the Visualisations
 
