@@ -1,19 +1,15 @@
-const width = 900;
-const height = 900;
+const width = 500;
+const height = 500;
 
-var promises = [];
-var files = [
-    //"https://cartomap.github.io/nl/wgs84/provincie_2019.topojson",
-    "https://cartomap.github.io/nl/wgs84/gemeente_2019.topojson",
-    // "data/geo.json"
-]
+
+// Create SVG
 
 function reset() {
     // d3.selectAll('.provinces').attr("visibility", "visible")
     d3.selectAll('.gemeente').attr("visibility", "visible")
     d3.selectAll('.buurt').attr("visibility", "hidden")
     d3.selectAll(path).transition().style("fill", null);
-    svg.transition().duration(750).call(
+    svg.transition().call(
         zoom.transform,
         d3.zoomIdentity,
         d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
@@ -24,96 +20,18 @@ const svg = d3.select("#map").append("svg")
     .attr("viewBox", [0, 0, width, height])
     .on("click", reset);
 
-const g = svg.append("g");
+const group = svg.append("g");
 
-const albersProjection = d3.geoAlbers()
+const projection = d3.geoAlbers()
     .rotate([0, 0])
     .parallels([40, 50])
 
 const path = d3.geoPath()
-    .projection(albersProjection);
+    .projection(projection);
 
-files.forEach(function (url) {
-    promises.push(d3.json(url))
-});
 
-Promise.all(promises)
-    .then(function (topology) {
 
-        albersProjection.fitExtent([[0, 0], [width, height]], topojson.feature(topology[0], topology[0].objects.gemeente_2019))
-
-        function handlemouseover(a, b) {
-            d3.select(this).transition().style("fill", "red");
-        }
-
-        function handlemouseout(a, b) {
-            d3.select(this).transition().style("fill", "white");
-        }
-
-        // let provinces = g.append("g")
-        //   .attr("class","provinces")
-        //   .attr('visibility','hidden')
-        //   .attr("fill", "white")
-        //   .attr("stroke","black")
-        //   .attr("cursor", "pointer")
-
-        //   .selectAll("path")
-        //   .data(topojson.feature(topology[0], topology[0].objects.provincie_2019).features)
-        //   .join("path")
-        //     .on("click", clicked)
-        //     .on("mouseover",handlemouseover)
-        //     .on("mouseout",handlemouseout)
-        //     .attr("d", path)
-        //     attr("id",(d)=>{
-        //       return d.properties.FID
-        //     });
-
-        //  provinces.append("title")
-        //  .text(d => d.properties.statnaam);
-
-        let gemeente = g.append("g")
-            // .attr('visibility','hidden')
-            .attr("class", "gemeente")
-            .attr("fill", "white")
-            .attr('stroke', 'black')
-            .attr("cursor", "pointer")
-
-            .selectAll("path")
-            .data(topojson.feature(topology[0], topology[0].objects.gemeente_2019).features)
-            .join("path")
-            .on("click", clicked)
-            .on("mouseover", handlemouseover)
-            .on("mouseout", handlemouseout)
-            .attr("d", path)
-            .attr("id", (d) => {
-                return d.properties.FID
-            });
-        gemeente.append("title")
-            .text(d => d.properties.statnaam);
-
-        let buurt = g.append("g")
-            .attr('visibility', 'hidden')
-            .attr("class", "buurt")
-            .attr("fill", "white")
-            .attr('stroke', 'black')
-            .attr("cursor", "pointer")
-            .selectAll("path")
-            .data(topojson.feature(topology[1], topology[1].objects.buurt_2019).features)
-            .join("path")
-            .on("click", clicked)
-            .on("mouseover", handlemouseover)
-            .on("mouseout", handlemouseout)
-            .attr("d", path)
-            .attr("id", (d) => {
-                return d.properties.FID
-            });
-        buurt.append("title")
-            .text(d => d.properties.statnaam);
-    });
-
-const zoom = d3.zoom()
-    .scaleExtent([1, 30])
-    .on("zoom", zoomed);
+// Add zoom functionality
 
 function zoomed(event) {
 
@@ -144,9 +62,19 @@ function zoomed(event) {
     }
 
     const { transform } = event;
-    g.attr("transform", transform);
-    g.attr("stroke-width", 1 / transform.k);
+    group.attr("transform", transform);
+    group.attr("stroke-width", 1 / transform.k);
 }
+
+const zoom = d3.zoom()
+    .scaleExtent([1, 30])
+    .on("zoom", zoomed);
+
+svg.call(zoom);
+
+
+
+// Load data and perform first update
 
 function clicked(event, d) {
 
@@ -192,7 +120,7 @@ function clicked(event, d) {
             //     })
         });
 
-    svg.transition().duration(750).call(
+    svg.transition().duration(500).call(
         zoom.transform,
         d3.zoomIdentity
             .translate(width / 2, height / 2)
@@ -200,4 +128,96 @@ function clicked(event, d) {
             .translate(-(x0 + x1) / 2, -(y0 + y1) / 2),
     );
 }
-svg.call(zoom);
+
+function update() {
+
+    projection.fitExtent([[0, 0], [width, height]], topojson.feature(files[0], files[0].objects.gemeente_2019))
+
+    function handlemouseover(a, b) {
+        const hover_color = d3.interpolateMagma(0.5)
+        d3.select(this)
+            .transition()
+            .style("fill", d3.color("white"));
+    }
+
+    function handlemouseout(a, b) {
+        d3.select(this)
+            .transition()
+            .style("fill", d3.interpolateMagma(0.5));
+    }
+
+    // let provinces = g.append("g")
+    //   .attr("class","provinces")
+    //   .attr('visibility','hidden')
+    //   .attr("fill", "white")
+    //   .attr("stroke","black")
+    //   .attr("cursor", "pointer")
+
+    //   .selectAll("path")
+    //   .data(topojson.feature(topology[0], topology[0].objects.provincie_2019).features)
+    //   .join("path")
+    //     .on("click", clicked)
+    //     .on("mouseover",handlemouseover)
+    //     .on("mouseout",handlemouseout)
+    //     .attr("d", path)
+    //     attr("id",(d)=>{
+    //       return d.properties.FID
+    //     });
+
+    //  provinces.append("title")
+    //  .text(d => d.properties.statnaam);
+
+    let gemeente = group.append("g")
+        // .attr('visibility','hidden')
+        .attr("class", "gemeente")
+        .attr("fill", d3.interpolateMagma(0.5))
+        .attr('stroke', 'black')
+        .attr("cursor", "pointer")
+
+        .selectAll("path")
+        .data(topojson.feature(files[0], files[0].objects.gemeente_2019).features)
+        .join("path")
+        .on("click", clicked)
+        .on("mouseover", handlemouseover)
+        .on("mouseout", handlemouseout)
+        .attr("d", path)
+        .attr("id", (d) => {
+            return d.properties.FID
+        });
+    
+    gemeente.append("title")
+        .text(d => d.properties.statnaam);
+
+    let buurt = group.append("g")
+        .attr('visibility', 'hidden')
+        .attr("class", "buurt")
+        .attr("fill", d3.interpolateMagma(0.5))
+        .attr('stroke', 'black')
+        .attr("cursor", "pointer")
+        .selectAll("path")
+        .data(topojson.feature(files[1], files[1].objects.buurt_2019).features)
+        .join("path")
+        .on("click", clicked)
+        .on("mouseover", handlemouseover)
+        .on("mouseout", handlemouseout)
+        .attr("d", path)
+        .attr("id", (d) => {
+            return d.properties.FID
+        });
+    
+    buurt.append("title")
+        .text(d => d.properties.statnaam);
+};
+
+const promises = [
+    d3.json("https://cartomap.github.io/nl/wgs84/gemeente_2019.topojson"),
+    d3.json("data/geo.json")
+]
+
+var files = [];
+Promise
+    .all(promises)
+    .then(downloads => {
+        files = downloads;
+        update();
+    });

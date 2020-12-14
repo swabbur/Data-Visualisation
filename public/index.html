@@ -65,22 +65,9 @@
             ]));
         });
 
-        // Dynamically color background
-        time = 0.0
-        setInterval(() => {
-            var color = "black"
-            if (time < 1.0) {
-                color = d3.interpolateMagma(1.0 - time);
-            } else {
-                color = d3.interpolateMagma(time - 1.0);
-            }
-            $("#map").css("background-color", color);
-            time += 0.005
-            time %= 2.0
-        }, 20);
-
         // Render Map
         function render(width, height) {
+
             // ...
         }
 
