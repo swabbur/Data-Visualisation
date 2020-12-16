@@ -35,7 +35,6 @@ function resize_map(width, height) {
     width = width;
     height = height;
     svg.attr("viewBox", [0, 0, width, height]);
-    reset();
 }
 
 

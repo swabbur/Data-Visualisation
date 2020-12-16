@@ -6,6 +6,7 @@ from functools import reduce
 from pathlib import Path
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
+
 def download(identifier: str):
     """Download a dataset from the CBS odata portal."""
 
@@ -261,7 +262,7 @@ def split(identifiers: [str]):
                 for region, region_data_frame, region_end in iterate_region(parent_data_frame, parent_end, region_types[0]):
                     split_and_store(region_data_frame, region_end, region_types[1:])
                     subregion_data_frame = region_data_frame[region_data_frame["type"] == region_types[1]]
-                    subregion_data_frame.to_csv(target_directory / (region + ".csv"), index=False)
+                    subregion_data_frame.to_json(target_directory / (region + ".json"), orient="records")
 
         split_and_store(data_frame, -1, ["country", "municipality", "district", "neighbourhood"])
 

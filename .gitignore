@@ -1,6 +1,9 @@
 ### Other ###
-data/
-
+public/data/cleaned
+public/data/downloaded
+public/data/joined
+public/data/preprocessed
+public/data/split
 
 ### Linux ###
 *~
