@@ -7,60 +7,72 @@ export class Options {
         requirements, 
         callback
     ) {
-        function inner_callback() {
-            callback(
-                preferences.map(preference => $("#" + preference).val()),
-                requirements.map(requirement => $("#" + requirement).val())
-            );
-        }
-    
-        preferences.forEach(preference => {
+
+        for (const preference in preferences) {
             preferences_table.append(create_row([
                 create_label(preference), 
-                create_slider(preference, inner_callback),
+                create_slider(preference, preferences[preference], () => {
+                    preferences[preference] = parseFloat($("#" + preference).val());
+                    callback();
+                }),
             ]));
-        });
-    
-        requirements.forEach(requirement => {
+        }
+
+        for (const requirement in requirements) {
             requirements_table.append(create_row([
-                create_checkbox(requirement, inner_callback),
+                create_checkbox(requirement, requirements[requirement], () => {
+                    requirements[requirement] = $("#" + requirement).prop('checked');
+                    callback();
+                }),
                 create_label(requirement),
             ]));
-        });
-    
-        inner_callback();
+        }
     }
 }
 
 function create_row(elements) {
     const row = $("<tr>");
-    elements.forEach(element => row.append($("<td>").append(element)));
+    elements.forEach(element => {
+        const data = create_data(element);
+        row.append(data);
+    });
     return row
 }
 
 function create_label(identifier) {
-    const words = identifier.split("_");
-    for (let i = 0; i < words.length; i++) {
-        words[i] = words[i][0].toUpperCase() + words[i].substr(1);
-    }
-    const title = words.join(" ");
-    return $("<label>").text(title);
+    const title = create_title(identifier);
+    return $("<label>")
+        .text(title);
 }
 
-function create_slider(identifier, callback) {
+function create_slider(identifier, value, callback) {
     return $("<input>")
         .attr("id", identifier)
         .attr("type", "range")
         .attr("min", 0.0)
         .attr("max", 1.0)
         .attr("step", 0.1)
-        .attr("value", 0.5)
+        .attr("value", value)
         .change(callback);
 }
 
-function create_checkbox(identifier, callback) {
+function create_checkbox(identifier, value, callback) {
     return $("<input>")
-    .attr("id", identifier)
-    .attr("type", "checkbox")
-    .change(callback);
+        .attr("id", identifier)
+        .attr("type", "checkbox")
+        .attr("checked", value)
+        .change(callback);
+}
+
+function create_data(element) {
+    return $("<td>")
+        .append(element);
+}
+
+function create_title(identifier) {
+    const words = identifier.split("_");
+    for (let i = 0; i < words.length; i++) {
+        words[i] = words[i][0].toUpperCase() + words[i].substr(1);
+    }
+    return words.join(" ");
 }

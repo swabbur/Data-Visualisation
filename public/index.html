@@ -33,20 +33,20 @@
 
         // Select preferences and requirements
 
-        const preferences = [
-            "price", 
-            "urbanity",
-            // "safety", 
-            "healthcare",
-            "education",
-        ]
+        const preferences = {
+            "price": 0.5, 
+            "urbanity": 0.5,
+            // "safety": 0.5, 
+            "healthcare": 0.5,
+            "education": 0.5,
+        }
 
-        const requirements = [
-            "daycare",
-            "grocery_store",
-            "pharmacy",
-            "library",
-        ]
+        const requirements = {
+            "daycare": false,
+            "grocery_store": false,
+            "pharmacy": false,
+            "library": false,
+        }
 
         // Create map
 
@@ -56,7 +56,9 @@
         // Create options panel
 
         import {Options} from "./js/options.js";
-        const options = new Options($("#preferences"), $("#requirements"), preferences, requirements, map.update);
+        const options = new Options($("#preferences"), $("#requirements"), preferences, requirements, () => {
+            console.log(preferences);
+        });
 
         // Resize HTML components
 

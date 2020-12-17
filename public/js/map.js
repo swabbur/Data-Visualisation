@@ -1,11 +1,9 @@
 export class Map {
 
-    provinces = [];
-    municipalities = [];
-    districts = [];
-    neighbourhoods = [];
-
     constructor(width, height) {
+
+        this.width = width;
+        this.height = height;
 
         this.svg = d3.select("#map").append("svg");
 
@@ -37,23 +35,28 @@ export class Map {
             "neighbourhoods": d3.json("data/geo/neighbourhoods.json"),
         }
 
-        this.promises["municipalities"].then(geo_data => {
-            this.render_data(geo_data);
-        });
+        this.select("NL00");
     }
 
-    render_data(geo_data) {
-        for (const key in geo_data.objects) {
-            if (geo_data.objects.hasOwnProperty(key)) {
-                const geo_objects = geo_data.objects[key];
-                this.render_objects(geo_data, geo_objects);
-            }
+    select(identifier) {
+
+        if (identifier.startsWith("BU")) {
+            return;
         }
+
+        d3.json("./data/split/84583NED_84718NED/" + identifier + ".json")
+            .then(regions => {
+
+                console.log(regions);
+                
+                this.promises["municipalities"].then(geo_data => {
+                    const geo_objects = get_objects(geo_data);
+                    this.render_objects(geo_data, geo_objects);
+                });
+            });
     }
 
     render_objects(geo_data, geo_objects) {
-
-        console.log(geo_objects);
 
         const features = topojson.feature(geo_data, geo_objects);
 
@@ -116,16 +119,12 @@ export class Map {
     update(preferences, requirements) {
 
     }
+}
 
-    select(identifier) {
-
-        if (identifier.startsWith("BU")) {
-            return;
+function get_objects(geo_data) {
+    for (const key in geo_data.objects) {
+        if (geo_data.objects.hasOwnProperty(key)) {
+            return geo_data.objects[key];
         }
-
-        d3.json("./data/split/84583NED_84718NED/" + identifier + ".json")
-            .then(regions => {
-                console.log(regions);
-            });
     }
 }
