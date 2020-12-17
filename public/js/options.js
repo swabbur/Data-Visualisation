@@ -1,15 +1,13 @@
 export class Options {
     
     constructor(
-        preferences_table, 
-        requirements_table, 
         preferences,
         requirements, 
         callback
     ) {
 
         for (const preference in preferences) {
-            preferences_table.append(create_row([
+            $("#preferences").append(create_row([
                 create_label(preference), 
                 create_slider(preference, preferences[preference], () => {
                     preferences[preference] = parseFloat($("#" + preference).val());
@@ -19,7 +17,7 @@ export class Options {
         }
 
         for (const requirement in requirements) {
-            requirements_table.append(create_row([
+            $("#requirements").append(create_row([
                 create_checkbox(requirement, requirements[requirement], () => {
                     requirements[requirement] = $("#" + requirement).prop('checked');
                     callback();
