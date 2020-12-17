@@ -29,10 +29,9 @@
             © Kadaster / Centraal Bureau voor de Statistiek, 2020
         </div>
     </div>
-    <script src="js/map.js"></script>
     <script type="module">
 
-        import {setup_options} from "./js/options.js";
+        // Select preferences and requirements
 
         const preferences = [
             "price", 
@@ -48,19 +47,19 @@
             "pharmacy",
             "library",
         ]
-        
-        function update_colors(preference_values, requirement_values) {
-            console.log(preference_values, requirement_values);
-        }
 
-        setup_options($("#preferences"), $("#requirements"), preferences, requirements, update_colors);
+        // Create map
 
-        // Render Map
-        function render(width, height) {
-            resize_map(width, height);
-        }
+        import {Map} from "./js/map.js";
+        const map = new Map(720, 960);
 
-        // Resize components
+        // Create options panel
+
+        import {Options} from "./js/options.js";
+        const options = new Options($("#preferences"), $("#requirements"), preferences, requirements, map.update);
+
+        // Resize HTML components
+
         function resize() {
 
             const width = $("body").width() - $("#options").width() - 64;
@@ -79,7 +78,7 @@
                 width: $("#options").width(),
             })
             
-            render(width, height);
+            map.resize(width, height);
         }
         $(window).on("resize", resize);
         resize();

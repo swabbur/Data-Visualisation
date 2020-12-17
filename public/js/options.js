@@ -1,33 +1,35 @@
-export function setup_options(
-    preferences_table, 
-    requirements_table, 
-    preferences,
-    requirements, 
-    callback
-) {
-
-    function inner_callback() {
-        callback(
-            preferences.map(preference => $("#" + preference).val()),
-            requirements.map(requirement => $("#" + requirement).val())
-        );
+export class Options {
+    
+    constructor(
+        preferences_table, 
+        requirements_table, 
+        preferences,
+        requirements, 
+        callback
+    ) {
+        function inner_callback() {
+            callback(
+                preferences.map(preference => $("#" + preference).val()),
+                requirements.map(requirement => $("#" + requirement).val())
+            );
+        }
+    
+        preferences.forEach(preference => {
+            preferences_table.append(create_row([
+                create_label(preference), 
+                create_slider(preference, inner_callback),
+            ]));
+        });
+    
+        requirements.forEach(requirement => {
+            requirements_table.append(create_row([
+                create_checkbox(requirement, inner_callback),
+                create_label(requirement),
+            ]));
+        });
+    
+        inner_callback();
     }
-
-    preferences.forEach(preference => {
-        preferences_table.append(create_row([
-            create_label(preference), 
-            create_slider(preference, inner_callback),
-        ]));
-    });
-
-    requirements.forEach(requirement => {
-        requirements_table.append(create_row([
-            create_checkbox(requirement, inner_callback),
-            create_label(requirement),
-        ]));
-    });
-
-    inner_callback();
 }
 
 function create_row(elements) {
