@@ -189,9 +189,13 @@ const promises = [
     d3.json("data/geo.json")
 ]
 
+d3.json("data/split/84583NED_84718NED/NL00.json")
+    .then(municipalities => {
+        console.log(municipalities);
+    });
+
 var files = [];
-Promise
-    .all(promises)
+Promise.all(promises)
     .then(downloads => {
         files = downloads;
         update();

@@ -9,7 +9,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
-    <script src="js/options.js"></script>
 </head>
 <body>
     <div id="map"></div>
@@ -31,40 +30,30 @@
         </div>
     </div>
     <script src="js/map.js"></script>
-    <script>
+    <script type="module">
 
-        // Create preference inputs
+        import {setup_options} from "./js/options.js";
+
         const preferences = [
             "price", 
             "urbanity",
             // "safety", 
             "healthcare",
-            "education", 
-            // "environment",
-            // "transit",
+            "education",
         ]
 
-        preferences.forEach(preference => {
-            $('#preferences').append(create_row([
-                create_label(preference),
-                create_slider(preference)
-            ]));
-        });
-
-        // Create requirement inputs
         const requirements = [
             "daycare",
             "grocery_store",
             "pharmacy",
             "library",
         ]
+        
+        function update_colors(preference_values, requirement_values) {
+            console.log(preference_values, requirement_values);
+        }
 
-        requirements.forEach(requirement => {
-            $('#requirements').append(create_row([
-                create_checkbox(requirement),
-                create_label(requirement)
-            ]));
-        });
+        setup_options($("#preferences"), $("#requirements"), preferences, requirements, update_colors);
 
         // Render Map
         function render(width, height) {
@@ -94,7 +83,7 @@
         }
         $(window).on("resize", resize);
         resize();
-        
+
     </script>
 </body>
 </html>
