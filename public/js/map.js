@@ -208,15 +208,12 @@ export class Map {
                 .style("fill", d3.interpolateMagma(0.5));
         }
     
+        // Clear group
+        this.group.selectAll("path").remove();
+
         // Select all paths
-        const paths = this.group.selectAll("path")
-            .data(topojson.feature(geo_data, geo_objects).features);
-
-        // Remove redundant paths
-        paths.exit().remove();
-
-        // Update remaining paths
-        paths.join("path")
+        this.group.selectAll("path").data(topojson.feature(geo_data, geo_objects).features)
+            .join("path")
             .attr("d", this.path)
             .attr("id", feature => feature.id)
             .attr("fill", d3.interpolateMagma(0.5))
