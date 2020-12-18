@@ -116,7 +116,7 @@ export class Map {
 
     render() {
         if (this.selection.neighbourhood) {
-            this.render_neighbourhood(this.selection.neighbourhood);
+            // this.render_neighbourhood(this.selection.neighbourhood);
         } else if (this.selection.district) {
             this.render_group(this.selection.district, "neighbourhoods");
 
@@ -138,19 +138,19 @@ export class Map {
             geo_objects = select_object(geo_objects, identifier);
 
             // Render objects
-            this.render_objects(geo_data, geo_objects);
+            // this.render_objects(geo_data, geo_objects);
         });
     }
 
     render_group(identifier, level) {
 
         // Load data
-        load(identifier, regions => {
+        load(identifier, objects => {
             this.promises[level].then(geo_data => {
 
                 // Select objects
                 var geo_objects = get_objects(geo_data);
-                const codes = regions.map(geo_object => geo_object.code);
+                const codes = objects.map(object => object.code);
                 geo_objects = select_objects(geo_objects, codes);
 
                 // Configure projection
@@ -159,7 +159,7 @@ export class Map {
                 }
 
                 // Render objects
-                this.render_objects(geo_data, geo_objects);
+                this.render_objects(geo_data, geo_objects, objects);
             });
         });
     }
@@ -168,9 +168,15 @@ export class Map {
         this.projection.fitExtent([[0, 0], [this.width, this.height]], topojson.feature(geo_data, geo_objects))
     }
 
-    render_objects(geo_data, geo_objects) {
+    render_objects(geo_data, geo_objects, objects) {
 
-        // "self" required due to on_click overriding "this"
+        // Create map of objects
+        const object_map = {};
+        for (const object of objects) {
+            object_map[object.code] = object;
+        }
+
+        // "self" required due to on_click and on_mouse_over overriding "this"
         const self = this;
 
         // Zoom whenever a region is clicked
@@ -194,18 +200,18 @@ export class Map {
         }
 
         // Highlight a hovered region
-        function on_mouse_over(event, data) {
-            const hover_color = d3.interpolateMagma(0.5)
+        function on_mouse_over(event, geo_object) {
             d3.select(this)
                 .transition()
                 .style("fill", "white");
         }
     
         // Re-color a no longer highlighted region
-        function on_mouse_out(event, data) {
+        function on_mouse_out(event, geo_object) {
+            const color = self.compute_color(object_map, geo_object)
             d3.select(this)
                 .transition()
-                .style("fill", d3.interpolateMagma(0.5));
+                .style("fill", color);
         }
     
         // Clear group
@@ -215,8 +221,8 @@ export class Map {
         this.group.selectAll("path").data(topojson.feature(geo_data, geo_objects).features)
             .join("path")
             .attr("d", this.path)
-            .attr("id", feature => feature.id)
-            .attr("fill", d3.interpolateMagma(0.5))
+            .attr("id", geo_object => geo_object.id)
+            .attr("fill", geo_object => this.compute_color(object_map, geo_object))
             .on("click", on_click)
             .on("contextmenu", () => this.deselect())
             .on("mouseover", on_mouse_over)
@@ -229,6 +235,15 @@ export class Map {
         event.stopPropagation();
         this.select(data.id);
         this.focus(data);
+    }
+
+    compute_color(object_map, geo_object) {
+        const object = object_map[geo_object.id];
+        const sum = object.price * this.preferences.price
+            + object.urbanity * this.preferences.urbanity
+            + object.healthcare * this.preferences.healthcare
+            + object.education * this.preferences.education;
+        return d3.interpolateMagma(sum / 4.0);
     }
 
     focus(geo_object) {

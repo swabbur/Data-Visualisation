@@ -56,9 +56,7 @@
         // Create options panel
 
         import {Options} from "./js/options.js";
-        const options = new Options(preferences, requirements, () => {
-            console.log(preferences);
-        });
+        const options = new Options(preferences, requirements, () => map.render());
 
         // Resize HTML components
 
