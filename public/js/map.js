@@ -6,10 +6,10 @@ export class Map {
         this.requirements = requirements;
 
         this.selection = {
-            country: null,
-            municipality: null,
-            district: null,
-            neighbourhood: null,
+            "country": null,
+            "municipality": null,
+            "district": null,
+            "neighbourhood": null,
         };
 
         this.promises = {
@@ -257,11 +257,26 @@ export class Map {
             urbanity = (1.0 - factor) * (1.0 - object.urbanity) + factor;
         }
 
-        // Healthcare and education preferences
+        // Healthcare, education and public transport preferences
         const healthcare = 1.0 - (1.0 - object.healthcare) * this.preferences.healthcare;
         const education = 1.0 - (1.0 - object.education) * this.preferences.education;
+        const public_transport = 1.0 - (1.0 - object.public_transport) * this.preferences.public_transport;
         
-        var value = urbanity * price * healthcare * education;
+        // Requirements
+        const daycare = (this.requirements.daycare ? (object.daycare ? 1.0 : 0.0) : 1.0);
+        const grocery_store = (this.requirements.grocery_store ? (object.grocery_store ? 1.0 : 0.0) : 1.0);
+        const pharmacy = (this.requirements.pharmacy ? (object.pharmacy ? 1.0 : 0.0) : 1.0);
+        const library = (this.requirements.library ? (object.library ? 1.0 : 0.0) : 1.0);
+
+        const value = price
+            * urbanity
+            * healthcare
+            * education
+            * public_transport
+            * daycare
+            * grocery_store
+            * pharmacy
+            * library;
         return d3.interpolateMagma(value);
     }
 
