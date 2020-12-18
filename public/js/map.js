@@ -248,11 +248,13 @@ export class Map {
         const price = 1.0 - Math.max(0.0, (1.0 - object.price) - this.preferences.price);
 
         // Urban vs. Rural
-        var urbanity = 0.5;
+        var urbanity = 1.0;
         if (this.preferences.urbanity > 0.5) {
-            urbanity += 2.0 * (object.urbanity - 0.5) * (this.preferences.urbanity - 0.5);
+            const factor = (this.preferences.urbanity - 0.5) * 2.0;
+            urbanity = factor * object.urbanity + (1.0 - factor);
         } else if (this.preferences.urbanity < 0.5) {
-            urbanity += 2.0 * (0.5 - object.urbanity) * (0.5 - this.preferences.urbanity);
+            const factor = this.preferences.urbanity * 2.0;
+            urbanity = (1.0 - factor) * (1.0 - object.urbanity) + factor;
         }
 
         // Healthcare and education preferences
