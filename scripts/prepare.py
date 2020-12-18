@@ -79,7 +79,21 @@ def clean(identifier: str):
             "AfstandTotZiekenhuis_11": "distance_to_hospital",
 
             # Education
+            # "AfstandTotSchool_60": "distance_to_school_1",
+            # "AfstandTotSchool_64": "distance_to_school_2",
+            # "AfstandTotSchool_68": "distance_to_school_3",
+            # "AfstandTotSchool_72": "distance_to_school_4",
             "AfstandTotSchool_98": "distance_to_school",
+
+            # Transit
+            "AfstandTotBelangrijkOverstapstation_91": "distance_to_public_transport",
+
+            # Required facilities
+            "AfstandTotApotheek_10": "distance_to_pharmacy",
+            "AfstandTotGroteSupermarkt_24": "distance_to_grocery_store",
+            "AfstandTotKinderdagverblijf_52": "distance_to_daycare",
+            "AfstandTotBibliotheek_92": "distance_to_library",
+
         }
         columns = {key: columns[key] for key in data_frame.columns if key in columns}
 
@@ -172,9 +186,24 @@ def preprocess(identifiers: [str]):
         fill_top_down("distance_to_general_practice")
         fill_top_down("distance_to_hospital")
         fill_top_down("distance_to_school")
+        fill_top_down("distance_to_public_transport")
+        fill_top_down("distance_to_pharmacy")
+        fill_top_down("distance_to_grocery_store")
+        fill_top_down("distance_to_daycare")
+        fill_top_down("distance_to_library")
 
         # Normalize columns
-        for column in ["distance_to_school"]:  # data_frame.columns:
+        to_be_normalized = [
+            "house_worth",
+            "urbanity",
+            "distance_to_general_practitioner",
+            "distance_to_general_practice",
+            "distance_to_hospital",
+            "distance_to_school",
+            "distance_to_public_transport",
+        ]
+
+        for column in to_be_normalized:
             if pandas.api.types.is_numeric_dtype(data_frame[column]):
                 scaler = MinMaxScaler()
                 data_frame[[column]] = scaler.fit_transform(data_frame[[column]])
@@ -210,9 +239,29 @@ def preprocess(identifiers: [str]):
         data_frame["education"] = 1.0 - data_frame["distance_to_school"]
         data_frame.drop(columns=["distance_to_school"], inplace=True)
 
+        # Public Transport
+        data_frame["public_transport"] = 1.0 - data_frame["distance_to_public_transport"]
+        data_frame.drop(columns=["distance_to_public_transport"], inplace=True)
+
+        # Pharmacy
+        data_frame["pharmacy"] = data_frame["distance_to_pharmacy"] < 5.0
+        data_frame.drop(columns=["distance_to_pharmacy"], inplace=True)
+
+        # Pharmacy
+        data_frame["grocery_store"] = data_frame["distance_to_grocery_store"] < 5.0
+        data_frame.drop(columns=["distance_to_grocery_store"], inplace=True)
+
+        # Pharmacy
+        data_frame["daycare"] = data_frame["distance_to_daycare"] < 5.0
+        data_frame.drop(columns=["distance_to_daycare"], inplace=True)
+
+        # Pharmacy
+        data_frame["library"] = data_frame["distance_to_library"] < 5.0
+        data_frame.drop(columns=["distance_to_library"], inplace=True)
+
         # Distribute by ranking
         for column in data_frame.columns:
-            if pandas.api.types.is_numeric_dtype(data_frame[column]):
+            if pandas.api.types.is_float_dtype(data_frame[column]):
 
                 values = sorted(data_frame[column])
                 latest_value = None
@@ -233,7 +282,7 @@ def preprocess(identifiers: [str]):
         histogram_directory = Path("data/histograms")
         histogram_directory.mkdir(parents=True, exist_ok=True)
         for column in data_frame.columns:
-            if pandas.api.types.is_numeric_dtype(data_frame[column]):
+            if pandas.api.types.is_float_dtype(data_frame[column]):
                 figure, ax = plt.subplots()
                 data_frame[column].hist(bins=20, legend=True, ax=ax)
                 figure.savefig(histogram_directory / (column + ".png"))
