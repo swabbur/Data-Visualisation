@@ -262,11 +262,21 @@ export class Map {
         const education = 1.0 - (1.0 - object.education) * this.preferences.education;
         const public_transport = 1.0 - (1.0 - object.public_transport) * this.preferences.public_transport;
         
-        var value = price
+        // Requirements
+        const daycare = (this.requirements.daycare ? (object.daycare ? 1.0 : 0.0) : 1.0);
+        const grocery_store = (this.requirements.grocery_store ? (object.grocery_store ? 1.0 : 0.0) : 1.0);
+        const pharmacy = (this.requirements.pharmacy ? (object.pharmacy ? 1.0 : 0.0) : 1.0);
+        const library = (this.requirements.library ? (object.library ? 1.0 : 0.0) : 1.0);
+
+        const value = price
             * urbanity
             * healthcare
             * education
-            * public_transport;
+            * public_transport
+            * daycare
+            * grocery_store
+            * pharmacy
+            * library;
         return d3.interpolateMagma(value);
     }
 
