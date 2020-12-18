@@ -1,6 +1,7 @@
 import cbsodata
 import math
 import pandas
+import matplotlib.pyplot as plt
 
 from functools import reduce
 from pathlib import Path
@@ -175,7 +176,7 @@ def preprocess(identifiers: [str]):
         fill_top_down("distance_to_school")
 
         # Normalize columns
-        for column in data_frame.columns:
+        for column in ["distance_to_school"]:  # data_frame.columns:
             if pandas.api.types.is_numeric_dtype(data_frame[column]):
                 scaler = MinMaxScaler()
                 data_frame[[column]] = scaler.fit_transform(data_frame[[column]])
@@ -202,7 +203,7 @@ def preprocess(identifiers: [str]):
         ]
 
         def weighted_minimum(row):
-            return 1.0 - min(4 * row[0], 2 * row[1], 1 * row[2])
+            return 1.0 - min(row[0], row[1] ** 2, row[2] ** 3)
 
         data_frame["healthcare"] = data_frame[healthcare_columns].apply(weighted_minimum, axis=1)
         data_frame.drop(columns=healthcare_columns, inplace=True)
@@ -211,11 +212,22 @@ def preprocess(identifiers: [str]):
         data_frame["education"] = 1.0 - data_frame["distance_to_school"]
         data_frame.drop(columns=["distance_to_school"], inplace=True)
 
-        # Normalize column values
+        # Distribute by ranking
         for column in data_frame.columns:
             if pandas.api.types.is_numeric_dtype(data_frame[column]):
-                scaler = MinMaxScaler()
-                data_frame[[column]] = scaler.fit_transform(data_frame[[column]])
+                values = sorted(data_frame[column].unique())
+                count = len(values)
+                ranks = map(lambda rank: rank / count, range(count))
+                rank_dict = {value: rank for value, rank in zip(values, ranks)}
+                data_frame[column] = data_frame[column].map(rank_dict)
+                # data_frame[column + "_2"] = data_frame[column].map(rank_dict)
+
+        # Create histograms for distribution analysis
+        # for column in data_frame.columns:
+        #     if pandas.api.types.is_numeric_dtype(data_frame[column]):
+        #         figure, ax = plt.subplots()
+        #         data_frame[column].hist(bins=11, legend=True, ax=ax)
+        #         figure.savefig("histograms/" + column + ".png")
 
         # Store clean dataset
         data_frame.to_csv(target_path, index=False)
