@@ -2,6 +2,7 @@
 public/data/cleaned
 public/data/downloaded
 public/data/joined
+public/data/histograms
 public/data/preprocessed
 public/data/split
 

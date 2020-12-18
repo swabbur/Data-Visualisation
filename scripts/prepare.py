@@ -65,7 +65,6 @@ def clean(identifier: str):
             "GemiddeldeWoningwaarde_35": "house_worth",
 
             # Urbanity
-            "Bevolkingsdichtheid_33": "density",
             "MateVanStedelijkheid_105": "urbanity",
 
             # Safety
@@ -168,7 +167,6 @@ def preprocess(identifiers: [str]):
                 values.append(value)
 
         fill_top_down("house_worth")
-        fill_top_down("density")
         fill_top_down("urbanity")
         fill_top_down("distance_to_general_practitioner")
         fill_top_down("distance_to_general_practice")
@@ -184,11 +182,11 @@ def preprocess(identifiers: [str]):
         # Combine data columns
 
         # Price
-        data_frame.rename(columns={"house_worth": "price"}, inplace=True)
+        data_frame["price"] = 1.0 - data_frame["house_worth"]
+        data_frame.drop(columns=["house_worth"], inplace=True)
 
         # Urbanity
-        data_frame["urbanity"] = data_frame["urbanity"] * data_frame["density"]
-        data_frame.drop(columns=["density"], inplace=True)
+        data_frame["urbanity"] = 1.0 - data_frame["urbanity"]
 
         # Safety
         # data_frame["safety"] = 1.0 / (data_frame["theft"] + data_frame["destruction"] + data_frame["violence"])
@@ -220,14 +218,15 @@ def preprocess(identifiers: [str]):
                 ranks = map(lambda rank: rank / count, range(count))
                 rank_dict = {value: rank for value, rank in zip(values, ranks)}
                 data_frame[column] = data_frame[column].map(rank_dict)
-                # data_frame[column + "_2"] = data_frame[column].map(rank_dict)
 
         # Create histograms for distribution analysis
-        # for column in data_frame.columns:
-        #     if pandas.api.types.is_numeric_dtype(data_frame[column]):
-        #         figure, ax = plt.subplots()
-        #         data_frame[column].hist(bins=11, legend=True, ax=ax)
-        #         figure.savefig("histograms/" + column + ".png")
+        histogram_directory = Path("data/histograms")
+        histogram_directory.mkdir(parents=True, exist_ok=True)
+        for column in data_frame.columns:
+            if pandas.api.types.is_numeric_dtype(data_frame[column]):
+                figure, ax = plt.subplots()
+                data_frame[column].hist(bins=11, legend=True, ax=ax)
+                figure.savefig(histogram_directory / (column + ".png"))
 
         # Store clean dataset
         data_frame.to_csv(target_path, index=False)
