@@ -221,6 +221,7 @@ export class Map {
             .attr("id", feature => feature.id)
             .attr("fill", d3.interpolateMagma(0.5))
             .on("click", on_click)
+            .on("contextmenu", () => this.deselect())
             .on("mouseover", on_mouse_over)
             .on("mouseout", on_mouse_out)
             .append("title")
