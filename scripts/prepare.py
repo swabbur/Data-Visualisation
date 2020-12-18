@@ -213,9 +213,19 @@ def preprocess(identifiers: [str]):
         # Distribute by ranking
         for column in data_frame.columns:
             if pandas.api.types.is_numeric_dtype(data_frame[column]):
-                values = sorted(data_frame[column].unique())
-                count = len(values)
-                ranks = map(lambda rank: rank / count, range(count))
+
+                values = sorted(data_frame[column])
+                latest_value = None
+                latest_rank = 0
+                next_rank = 0
+                max_rank = len(data_frame[column])
+                ranks = []
+                for value in values:
+                    if latest_value is None or latest_value < value:
+                        latest_rank = next_rank
+                    ranks.append(latest_rank / max_rank)
+                    next_rank += 1
+
                 rank_dict = {value: rank for value, rank in zip(values, ranks)}
                 data_frame[column] = data_frame[column].map(rank_dict)
 
@@ -225,7 +235,7 @@ def preprocess(identifiers: [str]):
         for column in data_frame.columns:
             if pandas.api.types.is_numeric_dtype(data_frame[column]):
                 figure, ax = plt.subplots()
-                data_frame[column].hist(bins=11, legend=True, ax=ax)
+                data_frame[column].hist(bins=20, legend=True, ax=ax)
                 figure.savefig(histogram_directory / (column + ".png"))
 
         # Store clean dataset

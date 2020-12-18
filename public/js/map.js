@@ -253,7 +253,7 @@ export class Map {
         
         const urbanity = 1.0 - Math.abs(this.preferences.urbanity - object.urbanity);
         
-        const value = (urbanity + price + healthcare + education) / 4.0;
+        const value = (urbanity * price * healthcare * education);
         return d3.interpolateMagma(value);
     }
 
