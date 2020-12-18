@@ -9,7 +9,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
-    <script src="js/options.js"></script>
 </head>
 <body>
     <div id="map"></div>
@@ -30,61 +29,37 @@
             © Kadaster / Centraal Bureau voor de Statistiek, 2020
         </div>
     </div>
-    <script>
+    <script type="module">
 
-        // Create preference inputs
-        const preferences = [
-            "price", 
-            "urbanity",
-            // "safety", 
-            "healthcare",
-            "education", 
-            // "environment",
-            // "transit",
-        ]
+        // Select preferences and requirements
 
-        preferences.forEach(preference => {
-            $('#preferences').append(create_row([
-                create_label(preference),
-                create_slider(preference)
-            ]));
-        });
-
-        // Create requirement inputs
-        const requirements = [
-            "daycare",
-            "grocery_store",
-            "pharmacy",
-            "library",
-        ]
-
-        requirements.forEach(requirement => {
-            $('#requirements').append(create_row([
-                create_checkbox(requirement),
-                create_label(requirement)
-            ]));
-        });
-
-        // Dynamically color background
-        time = 0.0
-        setInterval(() => {
-            var color = "black"
-            if (time < 1.0) {
-                color = d3.interpolateMagma(1.0 - time);
-            } else {
-                color = d3.interpolateMagma(time - 1.0);
-            }
-            $("#map").css("background-color", color);
-            time += 0.005
-            time %= 2.0
-        }, 20);
-
-        // Render Map
-        function render(width, height) {
-            // ...
+        const preferences = {
+            "price": 0.5, 
+            "urbanity": 0.5,
+            // "safety": 0.5, 
+            "healthcare": 0.5,
+            "education": 0.5,
         }
 
-        // Resize components
+        const requirements = {
+            "daycare": false,
+            "grocery_store": false,
+            "pharmacy": false,
+            "library": false,
+        }
+
+        // Create map
+
+        import {Map} from "./js/map.js";
+        const map = new Map(preferences, requirements);
+
+        // Create options panel
+
+        import {Options} from "./js/options.js";
+        const options = new Options(preferences, requirements, () => map.render());
+
+        // Resize HTML components
+
         function resize() {
 
             const width = $("body").width() - $("#options").width() - 64;
@@ -103,12 +78,11 @@
                 width: $("#options").width(),
             })
             
-            render(width, height);
+            map.resize(width, height);
         }
         $(window).on("resize", resize);
         resize();
-        
+
     </script>
-    <script src="js/map.js"></script>
 </body>
 </html>

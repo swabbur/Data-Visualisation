@@ -4,7 +4,8 @@ import pandas
 
 from functools import reduce
 from pathlib import Path
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
+
 
 def download(identifier: str):
     """Download a dataset from the CBS odata portal."""
@@ -176,9 +177,8 @@ def preprocess(identifiers: [str]):
         # Normalize columns
         for column in data_frame.columns:
             if pandas.api.types.is_numeric_dtype(data_frame[column]):
-                min_value = data_frame[column].min()
-                max_value = data_frame[column].max()
-                data_frame[column] = (data_frame[column] - min_value) / (max_value - min_value)
+                scaler = MinMaxScaler()
+                data_frame[[column]] = scaler.fit_transform(data_frame[[column]])
 
         # Combine data columns
 
@@ -211,10 +211,10 @@ def preprocess(identifiers: [str]):
         data_frame["education"] = 1.0 - data_frame["distance_to_school"]
         data_frame.drop(columns=["distance_to_school"], inplace=True)
 
-        # Standardize columns
+        # Normalize column values
         for column in data_frame.columns:
             if pandas.api.types.is_numeric_dtype(data_frame[column]):
-                scaler = StandardScaler()
+                scaler = MinMaxScaler()
                 data_frame[[column]] = scaler.fit_transform(data_frame[[column]])
 
         # Store clean dataset
@@ -261,7 +261,7 @@ def split(identifiers: [str]):
                 for region, region_data_frame, region_end in iterate_region(parent_data_frame, parent_end, region_types[0]):
                     split_and_store(region_data_frame, region_end, region_types[1:])
                     subregion_data_frame = region_data_frame[region_data_frame["type"] == region_types[1]]
-                    subregion_data_frame.to_csv(target_directory / (region + ".csv"), index=False)
+                    subregion_data_frame.to_json(target_directory / (region + ".json"), orient="records")
 
         split_and_store(data_frame, -1, ["country", "municipality", "district", "neighbourhood"])
 
