@@ -242,18 +242,24 @@ export class Map {
 
     compute_color(object_map, geo_object) {
 
-        // Price, healthcare, and education have low variability at municipality level due to 
-        // the averaging between the underlying districts.
-
         const object = object_map[geo_object.id];
 
-        const price = 1.0 - this.preferences.price * (1.0 - object.price);
-        const healthcare = 1.0 - this.preferences.healthcare * (1.0 - object.healthcare);
-        const education = 1.0 - this.preferences.education * (1.0 - object.education);
+        // Filter houses that are too expensive.
+        const price = 1.0 - Math.max(0.0, (1.0 - object.price) - this.preferences.price);
+
+        // Urban vs. Rural
+        var urbanity = 0.5;
+        if (this.preferences.urbanity > 0.5) {
+            urbanity += 2.0 * (object.urbanity - 0.5) * (this.preferences.urbanity - 0.5);
+        } else if (this.preferences.urbanity < 0.5) {
+            urbanity += 2.0 * (0.5 - object.urbanity) * (0.5 - this.preferences.urbanity);
+        }
+
+        // Healthcare and education preferences
+        const healthcare = 1.0 - (1.0 - object.healthcare) * this.preferences.healthcare;
+        const education = 1.0 - (1.0 - object.education) * this.preferences.education;
         
-        const urbanity = 1.0 - Math.abs(this.preferences.urbanity - object.urbanity);
-        
-        const value = (urbanity * price * healthcare * education);
+        var value = urbanity * price * healthcare * education;
         return d3.interpolateMagma(value);
     }
 
