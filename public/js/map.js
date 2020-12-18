@@ -13,28 +13,26 @@ export class Map {
         };
 
         this.promises = {
-            "provinces": d3.json("data/geo/provinces.json"),
             "municipalities": d3.json("data/geo/municipalities.json"),
             "districts": d3.json("data/geo/districts.json"),
             "neighbourhoods": d3.json("data/geo/neighbourhoods.json"),
         }
 
-        this.setup_renderer();
+        this.prepare();
     }
 
-    setup_renderer() {
+    prepare() {
 
+        // Disable context menu
+        $("#map").bind("contextmenu", () => false);
+        
+        // Create SVG hierarchy
         this.svg = d3.select("#map").append("svg");
         this.group = this.svg.append("g")
             .attr("cursor", "pointer")
             .attr('stroke', "black");
-        this.groups = {
-            "provinces": this.group.append("g"),
-            "municipalities": this.group.append("g"),
-            "districts": this.group.append("g"),
-            "neighbourhoods": this.group.append("g"),
-        }
 
+        // Prepare zoom functionality
         this.zoom = d3.zoom()
             .scaleExtent([1, 30])
             .on("zoom", event => {
@@ -44,6 +42,7 @@ export class Map {
             });
         this.svg.call(this.zoom);
 
+        // Setup projection and path
         this.projection = d3.geoAlbers()
             .rotate([0, 0])
             .parallels([40, 50])
@@ -51,41 +50,118 @@ export class Map {
             .projection(this.projection);
 
         this.select("NL00");
-        this.render();
+
+        // Add deselect controls
+        $(document).on("keydown", event => {
+            if (event.key == "Escape") {
+                this.deselect();
+            }
+        });
     }
 
     select(identifier) {
 
+        var render_required = false;
+
         if (identifier.startsWith("NL")) {
             this.selection.country = identifier;
-            this.selection.municipality = null;
-            this.selection.district = null;
-            this.selection.neighbourhood = null;
+            render_required = true;
         }
 
         if (identifier.startsWith("GM")) {
             this.selection.municipality = identifier;
-            this.selection.district = null;
-            this.selection.neighbourhood = null;
+            render_required = true;
         }
 
         if (identifier.startsWith("WK")) {
             this.selection.district = identifier;
-            this.selection.neighbourhood = null;
+            render_required = true;
         }
 
         if (identifier.startsWith("BU")) {
             this.selection.neighbourhood = identifier;
+            render_required = true;
         }
 
+        if (render_required) {
+            this.render();
+        }
+    }
+
+    deselect() {
+    
+        if (this.selection.neighbourhood) {
+            this.selection.neighbourhood = null;
+    
+        } else if (this.selection.district) {
+            this.selection.district = null;
+    
+        } else if (this.selection.municipality) {
+            this.selection.municipality = null;
+        }
+    
         this.render();
+    }
+
+    resize(width, height) {
+        this.width = width;
+        this.height = height;
+        this.svg.attr("viewBox", [0, 0, width, height]);
+    }
+
+    render() {
+        if (this.selection.neighbourhood) {
+            this.render_neighbourhood(this.selection.neighbourhood);
+        } else if (this.selection.district) {
+            this.render_group(this.selection.district, "neighbourhoods");
+
+        } else if (this.selection.municipality) {
+            this.render_group(this.selection.municipality, "districts");
+
+        } else if (this.selection.country) {
+            this.render_group(this.selection.country, "municipalities");
+        }
+    }
+
+    render_neighbourhood(identifier) {
+        this.promises["neighbourhoods"].then(geo_data => {
+
+            // Select objects
+            var geo_objects = get_objects(geo_data);
+            geo_objects = select_objects(geo_objects, [identifier]);
+
+            // Render objects
+            this.render_objects(geo_data, geo_objects);
+        });
+    }
+
+    render_group(identifier, level) {
+
+        // Load data
+        load(identifier, regions => {
+            this.promises[level].then(geo_data => {
+
+                // Select objects
+                var geo_objects = get_objects(geo_data);
+                const codes = regions.map(geo_object => geo_object.code);
+                geo_objects = select_objects(geo_objects, codes);
+
+                // Configure projection
+                if (level == "municipalities") {
+                    this.configure_projection(geo_data, geo_objects);
+                }
+
+                // Render objects
+                this.render_objects(geo_data, geo_objects);
+            });
+        });
     }
 
     configure_projection(geo_data, geo_objects) {
         this.projection.fitExtent([[0, 0], [this.width, this.height]], topojson.feature(geo_data, geo_objects))
     }
 
-    render_objects(group, geo_data, geo_objects) {
+    render_objects(geo_data, geo_objects) {
 
         // Required due to function overriding "this".
         const self = this;
@@ -121,92 +197,35 @@ export class Map {
                 .style("fill", d3.interpolateMagma(0.5));
         }
     
-        group.selectAll("path")
-            .remove();
+        const paths = this.group.selectAll("path")
+            .data(topojson.feature(geo_data, geo_objects).features);
 
-        group.selectAll("path")
-            .data(topojson.feature(geo_data, geo_objects).features)
-                .join("path")
-                .attr("d", this.path)
-                .attr("id", feature => feature.id)
-                .attr("fill", d3.interpolateMagma(0.5))
-                .on("click", on_click)
-                .on("mouseover", on_mouse_over)
-                .on("mouseout", on_mouse_out)
-                .append("title")
-                    .text(feature => feature.properties.statnaam);
+        paths.exit().remove();
+
+        paths.join("path")
+            .attr("d", this.path)
+            .attr("id", feature => feature.id)
+            .attr("fill", d3.interpolateMagma(0.5))
+            .on("click", on_click)
+            .on("mouseover", on_mouse_over)
+            .on("mouseout", on_mouse_out)
+            .append("title")
+                .text(feature => feature.properties.statnaam);
     }
 
-    resize(width, height) {
-        this.width = width;
-        this.height = height;
-        this.svg.attr("viewBox", [0, 0, width, height]);
+    on_click(event, data) {
+        event.stopPropagation();
+        this.select(data.id);
+        this.focus(data);
     }
 
-    render() {
-
-        // Select country
-        const country = this.selection.country;
-        if (country) {
-
-            // Get municipality data
-            load(country, municipalities => {
-                this.promises["municipalities"].then(geo_country => {
-                    var geo_municipalities = get_objects(geo_country);
-                    
-                    // Configure SVG extent
-                    this.configure_projection(geo_country, geo_municipalities);
-
-                    // Filter hidden municipalities
-                    const municipality_codes = municipalities.map(municipality => municipality.code);
-                    geo_municipalities = select_objects(geo_municipalities, municipality_codes);
-                    
-                    // Select municipality
-                    const municipality = this.selection.municipality;
-                    if (municipality) {
-                        
-                        // Hide selected municipality
-                        geo_municipalities = filter_objects(geo_municipalities, municipality);
-
-                        // Get district data
-                        load(municipality, districts => {
-                            this.promises["districts"].then(geo_municipality => {
-                                var geo_districts = get_objects(geo_municipality);
-
-                                // Hide hidden districts
-                                const district_codes = districts.map(district => district.code);
-                                geo_districts = select_objects(geo_districts, district_codes);
-                                
-                                // Select district
-                                const district = this.selection.district;
-                                if (district) {
-                                    
-                                    // Hide selected district
-                                    geo_districts = filter_objects(geo_districts, district);
-
-                                    // Get district data
-                                    load(district, neighbourhoods => {
-                                        this.promises["neighbourhoods"].then(geo_district => {
-                                            var geo_neighbourhoods = get_objects(geo_district);
-
-                                            // Hide hidden districts
-                                            const neighbourhood_codes = neighbourhoods.map(neighbourhood => neighbourhood.code);
-                                            geo_neighbourhoods = select_objects(geo_neighbourhoods, neighbourhood_codes);
-                                            
-                                            this.render_objects(this.groups["neighbourhoods"], geo_district, geo_neighbourhoods);
-                                        });
-                                    });
-                                }
-
-                                this.render_objects(this.groups["districts"], geo_municipality, geo_districts);
-                            });
-                        });
-                    }
-
-                    this.render_objects(this.groups["municipalities"], geo_country, geo_municipalities);
-                });
-            });
-        }
+    focus(geo_object) {
+        const [[x0, y0], [x1, y1]] = this.path.bounds(geo_object);
+        const zoomIdentity = d3.zoomIdentity
+            .translate(this.width / 2, this.height / 2)
+            .scale(Math.min(100, 0.9 / Math.max((x1 - x0) / this.width, (y1 - y0) / this.height)))
+            .translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
+        this.svg.transition().call(this.zoom.transform,zoomIdentity);
     }
 }
 
@@ -220,15 +239,6 @@ function get_objects(geo_data) {
         if (geo_data.objects.hasOwnProperty(key)) {
             return geo_data.objects[key];
         }
-    }
-}
-
-function filter_objects(geo_objects, exception) {
-    return {
-        type: geo_objects.type,
-        geometries: geo_objects.geometries.filter(geomerty => {
-            return geomerty.id != exception;
-        })
     }
 }
 
