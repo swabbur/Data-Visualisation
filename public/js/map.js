@@ -124,11 +124,13 @@ export class Map {
     }
 
     render_neighbourhood(identifier) {
+
+        // Load geographical data only
         this.promises["neighbourhoods"].then(geo_data => {
 
-            // Select objects
+            // Select object
             var geo_objects = get_objects(geo_data);
-            geo_objects = select_objects(geo_objects, [identifier]);
+            geo_objects = select_object(geo_objects, identifier);
 
             // Render objects
             this.render_objects(geo_data, geo_objects);
@@ -245,8 +247,15 @@ function get_objects(geo_data) {
 function select_objects(geo_objects, selected) {
     return {
         type: geo_objects.type,
-        geometries: geo_objects.geometries.filter(geomerty => {
-            return selected.includes(geomerty.id);
+        geometries: geo_objects.geometries.filter(geometry => {
+            return selected.includes(geometry.id);
         })
+    }
+}
+
+function select_object(geo_objects, identifier) {
+    return {
+        type: geo_objects.type,
+        geometries: [geo_objects.geometries.find(geometry => geometry.id == identifier)]
     }
 }
