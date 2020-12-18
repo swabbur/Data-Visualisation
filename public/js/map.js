@@ -64,23 +64,23 @@ export class Map {
         var render_required = false;
 
         if (identifier.startsWith("NL")) {
+            render_required = (this.selection.country != identifier);
             this.selection.country = identifier;
-            render_required = true;
         }
 
         if (identifier.startsWith("GM")) {
+            render_required = (this.selection.municipality != identifier);
             this.selection.municipality = identifier;
-            render_required = true;
         }
 
         if (identifier.startsWith("WK")) {
+            render_required = (this.selection.district != identifier);
             this.selection.district = identifier;
-            render_required = true;
         }
 
         if (identifier.startsWith("BU")) {
+            render_required = (this.selection.neighbourhood != identifier);
             this.selection.neighbourhood = identifier;
-            render_required = true;
         }
 
         if (render_required) {
@@ -89,18 +89,23 @@ export class Map {
     }
 
     deselect() {
+
+        var render_required = false;
     
         if (this.selection.neighbourhood) {
             this.selection.neighbourhood = null;
-    
+            render_required = true;
         } else if (this.selection.district) {
             this.selection.district = null;
-    
+            render_required = true;
         } else if (this.selection.municipality) {
             this.selection.municipality = null;
+            render_required = true;
         }
     
-        this.render();
+        if (render_required) {
+            this.render();
+        }
     }
 
     resize(width, height) {
@@ -165,8 +170,10 @@ export class Map {
 
     render_objects(geo_data, geo_objects) {
 
-        // Required due to function overriding "this".
+        // "self" required due to on_click overriding "this"
         const self = this;
+
+        // Zoom whenever a region is clicked
         function on_click(event, data) {
 
             self.select(data.id);
@@ -186,6 +193,7 @@ export class Map {
             event.stopPropagation();
         }
 
+        // Highlight a hovered region
         function on_mouse_over(event, data) {
             const hover_color = d3.interpolateMagma(0.5)
             d3.select(this)
@@ -193,17 +201,21 @@ export class Map {
                 .style("fill", "white");
         }
     
+        // Re-color a no longer highlighted region
         function on_mouse_out(event, data) {
             d3.select(this)
                 .transition()
                 .style("fill", d3.interpolateMagma(0.5));
         }
     
+        // Select all paths
         const paths = this.group.selectAll("path")
             .data(topojson.feature(geo_data, geo_objects).features);
 
+        // Remove redundant paths
         paths.exit().remove();
 
+        // Update remaining paths
         paths.join("path")
             .attr("d", this.path)
             .attr("id", feature => feature.id)
@@ -247,9 +259,7 @@ function get_objects(geo_data) {
 function select_objects(geo_objects, selected) {
     return {
         type: geo_objects.type,
-        geometries: geo_objects.geometries.filter(geometry => {
-            return selected.includes(geometry.id);
-        })
+        geometries: geo_objects.geometries.filter(geometry => selected.includes(geometry.id))
     }
 }
 
