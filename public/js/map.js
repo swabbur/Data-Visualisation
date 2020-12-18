@@ -238,12 +238,24 @@ export class Map {
     }
 
     compute_color(object_map, geo_object) {
+
         const object = object_map[geo_object.id];
+
+        const total = this.preferences.price 
+            + this.preferences.urbanity 
+            + this.preferences.healthcare
+            + this.preferences.education;
+
+        if (total == 0.0) {
+            return d3.interpolateMagma(0.5);
+        }
+
         const sum = object.price * this.preferences.price
             + object.urbanity * this.preferences.urbanity
             + object.healthcare * this.preferences.healthcare
             + object.education * this.preferences.education;
-        return d3.interpolateMagma(sum / 4.0);
+
+        return d3.interpolateMagma(sum / total);
     }
 
     focus(geo_object) {
