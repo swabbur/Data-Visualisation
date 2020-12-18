@@ -244,21 +244,25 @@ export class Map {
 
         const object = object_map[geo_object.id];
 
-        const total = this.preferences.price 
-            + this.preferences.urbanity 
-            + this.preferences.healthcare
-            + this.preferences.education;
+        // Filter houses that are too expensive.
+        const price = 1.0 - Math.max(0.0, (1.0 - object.price) - this.preferences.price);
 
-        if (total == 0.0) {
-            return d3.interpolateMagma(0.5);
+        // Urban vs. Rural
+        var urbanity = 1.0;
+        if (this.preferences.urbanity > 0.5) {
+            const factor = (this.preferences.urbanity - 0.5) * 2.0;
+            urbanity = factor * object.urbanity + (1.0 - factor);
+        } else if (this.preferences.urbanity < 0.5) {
+            const factor = this.preferences.urbanity * 2.0;
+            urbanity = (1.0 - factor) * (1.0 - object.urbanity) + factor;
         }
 
-        const sum = object.price * this.preferences.price
-            + object.urbanity * this.preferences.urbanity
-            + object.healthcare * this.preferences.healthcare
-            + object.education * this.preferences.education;
-
-        return d3.interpolateMagma(sum / total);
+        // Healthcare and education preferences
+        const healthcare = 1.0 - (1.0 - object.healthcare) * this.preferences.healthcare;
+        const education = 1.0 - (1.0 - object.education) * this.preferences.education;
+        
+        var value = urbanity * price * healthcare * education;
+        return d3.interpolateMagma(value);
     }
 
     focus(geo_object) {
