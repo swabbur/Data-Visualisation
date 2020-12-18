@@ -116,7 +116,8 @@ export class Map {
 
     render() {
         if (this.selection.neighbourhood) {
-            // this.render_neighbourhood(this.selection.neighbourhood);
+            this.render_neighbourhood(this.selection.district, this.selection.neighbourhood);
+
         } else if (this.selection.district) {
             this.render_group(this.selection.district, "neighbourhoods");
 
@@ -128,17 +129,19 @@ export class Map {
         }
     }
 
-    render_neighbourhood(identifier) {
+    render_neighbourhood(district_id, neighbourhood_id) {
 
-        // Load geographical data only
-        this.promises["neighbourhoods"].then(geo_data => {
+        // Load data
+        load(district_id, objects => {
+            this.promises["neighbourhoods"].then(geo_data => {
 
-            // Select object
-            var geo_objects = get_objects(geo_data);
-            geo_objects = select_object(geo_objects, identifier);
+                // Select objects
+                var geo_objects = get_objects(geo_data);
+                geo_objects = select_objects(geo_objects, [neighbourhood_id]);
 
-            // Render objects
-            // this.render_objects(geo_data, geo_objects);
+                // Render objects
+                this.render_objects(geo_data, geo_objects, objects);
+            });
         });
     }
 
