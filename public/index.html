@@ -9,6 +9,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 <body>
     <div id="map"></div>
@@ -21,8 +23,11 @@
             <h1>Requirements</h1>
             <table id="requirements"></table>
         </div>
+        <div>
+            <canvas id="radarChart" width="400" height="300"></canvas>
+        </div>
         <div id="legend">
-            <h1>Legend</h1>
+            <h2>Legend</h2>
             <img id="colors" src="img/magma.png">
             <div class="colorsLabels">
                 <div class="childLeft">Unsuitable</div>
@@ -52,16 +57,21 @@
             "library": false,
         }
 
-        // Create map
+        // radar map
+        
+        import {Radar} from "./js/radar.js";
+        const rc = new Radar();
+
 
         import {Map} from "./js/map.js";
-        const map = new Map(preferences, requirements);
+        const map = new Map(preferences, requirements,rc);
 
         // Create options panel
 
         import {Options} from "./js/options.js";
         const options = new Options(preferences, requirements, () => map.render());
 
+       
         // Resize HTML components
 
         function resize() {
