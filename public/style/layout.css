@@ -35,8 +35,8 @@ body {
     } 
 
     #copyright {
-        right: 16px;
-        bottom: 16px;
+        /* right: 16px;
+        bottom: 16px; */
         padding-top: 48px;
         font-size: 12px;
         text-align: center;
