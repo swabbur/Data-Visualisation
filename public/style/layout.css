@@ -1,6 +1,5 @@
 body {
     font-family: 'Roboto', sans-serif;
-    overflow: hidden;
 }
 
 #map {
@@ -9,6 +8,7 @@ body {
     top: 0px;
     background-color: rgb(127, 127, 127);
     box-shadow: inset -4px 0px 4px -4px black;
+    overflow: hidden;
 }
 
 #options {
@@ -24,10 +24,20 @@ body {
         border: 1px solid black;
     }
 
+    .childLeft {
+        float: left;
+        text-align: left;
+    }
+    
+    .childRight {
+        float: right;
+        text-align: right;
+    } 
+
     #copyright {
         right: 16px;
         bottom: 16px;
-        padding-top: 16px;
+        padding-top: 48px;
         font-size: 12px;
         text-align: center;
     }
