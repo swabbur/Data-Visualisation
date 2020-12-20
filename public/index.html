@@ -9,6 +9,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div id="map"></div>
@@ -21,8 +22,11 @@
             <h1>Requirements</h1>
             <table id="requirements"></table>
         </div>
+        <div>
+            <canvas id="radar_chart" width="0" height="0"></canvas>
+        </div>
         <div id="legend">
-            <h1>Legend</h1>
+            <h2>Legend</h2>
             <img id="colors" src="img/magma.png">
             <div class="colorsLabels">
                 <div class="childLeft">Unsuitable</div>
@@ -52,36 +56,54 @@
             "library": false,
         }
 
-        // Create map
+        // Create radar chart
+        
+        import {Radar} from "./js/radar.js";
+        const rc = new Radar();
+
+        // Create chloropleth map
 
         import {Map} from "./js/map.js";
-        const map = new Map(preferences, requirements);
+        const map = new Map(preferences, requirements, rc);
 
         // Create options panel
 
         import {Options} from "./js/options.js";
         const options = new Options(preferences, requirements, () => map.render());
 
-        // Resize HTML components
+        // Resize components
 
         function resize() {
 
-            const width = $("body").width() - $("#options").width() - 64;
-            const height = Math.max($(window).height(), ($("#options").height() + 64));
-            
-            $("#map").css({
-                width: width,
-                height: height,
-            });
+            // Resize radar chart
+
+            $("#radar_chart").css({
+                width: $("#options").width(),
+                height: $("#options").width() * 3 / 4,
+            })
+
+            // Resize color legend
 
             $("#colors").css({
                 width: $("#options").width() - 2,
             });
             
+            // Resize copyright
+
             $("#copyright").css({
                 width: $("#options").width(),
             })
+
+            // Resize map
             
+            const width = $("body").width() - $("#options").width() - 64;
+            const height = Math.max($(window).height(), ($("#options").height() + 64));
+
+            $("#map").css({
+                width: width,
+                height: height,
+            });
+
             map.resize(width, height);
         }
         $(window).on("resize", resize);

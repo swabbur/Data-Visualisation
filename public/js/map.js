@@ -1,9 +1,12 @@
 export class Map {
 
-    constructor(preferences, requirements) {
+    constructor(preferences, requirements, radar_chart) {
 
         this.preferences = preferences;
         this.requirements = requirements;
+        this.radar_chart = radar_chart;
+        
+        this.current_level = "";
 
         this.selection = {
             "country": null,
@@ -89,7 +92,7 @@ export class Map {
     }
 
     deselect() {
-
+        
         var render_required = false;
     
         if (this.selection.neighbourhood) {
@@ -117,15 +120,19 @@ export class Map {
     render() {
         if (this.selection.neighbourhood) {
             this.render_neighbourhood(this.selection.district, this.selection.neighbourhood);
+            this.current_level = "l4";
 
         } else if (this.selection.district) {
             this.render_group(this.selection.district, "neighbourhoods");
+            this.current_level = "l3";
 
         } else if (this.selection.municipality) {
             this.render_group(this.selection.municipality, "districts");
+            this.current_level = "l2";
 
         } else if (this.selection.country) {
             this.render_group(this.selection.country, "municipalities");
+            this.current_level = "l1";
         }
     }
 
@@ -138,7 +145,7 @@ export class Map {
                 // Select objects
                 var geo_objects = get_objects(geo_data);
                 geo_objects = select_objects(geo_objects, [neighbourhood_id]);
-
+                
                 // Render objects
                 this.render_objects(geo_data, geo_objects, objects);
             });
@@ -172,8 +179,9 @@ export class Map {
     }
 
     render_objects(geo_data, geo_objects, objects) {
+        
+        this.render_radar_map(objects);
 
-        // Create map of objects
         const object_map = {};
         for (const object of objects) {
             object_map[object.code] = object;
@@ -181,7 +189,7 @@ export class Map {
 
         // "self" required due to on_click and on_mouse_over overriding "this"
         const self = this;
-
+        
         // Zoom whenever a region is clicked
         function on_click(event, data) {
 
@@ -231,7 +239,7 @@ export class Map {
             .on("mouseover", on_mouse_over)
             .on("mouseout", on_mouse_out)
             .append("title")
-                .text(feature => feature.properties.statnaam);
+                .text(feature => feature.properties.statnaam);   
     }
 
     on_click(event, data) {
@@ -239,6 +247,23 @@ export class Map {
         this.select(data.id);
         this.focus(data);
     }
+
+    render_radar_map(objects){
+        if(this.current_level !== "l1"){
+            const radar_values = objects.reduce((a, b) => ({
+                  price: (a.price + b.price) / objects.length,
+                  urbanity: (a.urbanity + b.urbanity) / objects.length,
+                  healthcare: (a.healthcare + b.healthcare) / objects.length,
+                  education: (a.education + b.education) / objects.length,
+                  public_transport: (a.public_transport + b.public_transport) / objects.length
+            }));
+            this.radar_chart.set_data(Object.values(radar_values))
+            this.radar_chart.draw();
+        } else{
+            this.radar_chart.set_data([0,0,0,0,0]);
+            this.radar_chart.draw();
+        }
+      }
 
     compute_color(object_map, geo_object) {
 
@@ -307,12 +332,5 @@ function select_objects(geo_objects, selected) {
     return {
         type: geo_objects.type,
         geometries: geo_objects.geometries.filter(geometry => selected.includes(geometry.id))
-    }
-}
-
-function select_object(geo_objects, identifier) {
-    return {
-        type: geo_objects.type,
-        geometries: [geo_objects.geometries.find(geometry => geometry.id == identifier)]
     }
 }
