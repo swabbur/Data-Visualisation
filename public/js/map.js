@@ -91,7 +91,7 @@ export class Map {
     }
 
     deselect() {
-
+        // console.log(this.selection)
         var render_required = false;
     
         if (this.selection.neighbourhood) {
@@ -248,7 +248,7 @@ export class Map {
     }
 
     renderRadarMap(objects){
-        console.log(this.currentLevel)
+        // console.log(this.currentLevel)
         if(this.currentLevel!=='l1'){
             const radarvalues=objects.reduce((a, b) => (
                 {
@@ -259,9 +259,14 @@ export class Map {
                   public_transport: (a.public_transport + b.public_transport)/objects.length
                 }
               ));
-              console.log(radarvalues)
+            //   console.log(radarvalues)
+            
             this.rc.setData(Object.values(radarvalues))
-            this.rc.example();
+            this.rc.draw();
+        }
+        else{
+            this.rc.setData([0,0,0,0,0]);
+            this.rc.draw();
         }
       }
 
