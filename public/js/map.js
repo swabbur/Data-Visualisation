@@ -145,6 +145,7 @@ export class Map {
                 // Select objects
                 var geo_objects = get_objects(geo_data);
                 geo_objects = select_objects(geo_objects, [neighbourhood_id]);
+                
                 // Render objects
                 this.render_objects(geo_data, geo_objects, objects);
             });
@@ -238,9 +239,7 @@ export class Map {
             .on("mouseover", on_mouse_over)
             .on("mouseout", on_mouse_out)
             .append("title")
-                .text(feature => feature.properties.statnaam);
-
-        
+                .text(feature => feature.properties.statnaam);   
     }
 
     on_click(event, data) {
