@@ -23,7 +23,7 @@
             <table id="requirements"></table>
         </div>
         <div>
-            <canvas id="radarChart" width="350" height="300"></canvas>
+            <canvas id="radar_chart" width="0" height="0"></canvas>
         </div>
         <div id="legend">
             <h2>Legend</h2>
@@ -61,38 +61,49 @@
         import {Radar} from "./js/radar.js";
         const rc = new Radar();
 
-
         // Create chloropleth map
 
         import {Map} from "./js/map.js";
-        const map = new Map(preferences, requirements,rc);
+        const map = new Map(preferences, requirements, rc);
 
         // Create options panel
 
         import {Options} from "./js/options.js";
         const options = new Options(preferences, requirements, () => map.render());
 
-       
-        // Resize HTML components
+        // Resize components
 
         function resize() {
 
-            const width = $("body").width() - $("#options").width() - 64;
-            const height = Math.max($(window).height(), ($("#options").height() + 64));
-            
-            $("#map").css({
-                width: width,
-                height: height,
-            });
+            // Resize radar chart
+
+            $("#radar_chart").css({
+                width: $("#options").width(),
+                height: $("#options").width() * 3 / 4,
+            })
+
+            // Resize color legend
 
             $("#colors").css({
                 width: $("#options").width() - 2,
             });
             
+            // Resize copyright
+
             $("#copyright").css({
                 width: $("#options").width(),
             })
+
+            // Resize map
             
+            const width = $("body").width() - $("#options").width() - 64;
+            const height = Math.max($(window).height(), ($("#options").height() + 64));
+
+            $("#map").css({
+                width: width,
+                height: height,
+            });
+
             map.resize(width, height);
         }
         $(window).on("resize", resize);

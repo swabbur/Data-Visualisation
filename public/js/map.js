@@ -1,11 +1,13 @@
 export class Map {
 
-    constructor(preferences, requirements,rc) {
+    constructor(preferences, requirements, radar_chart) {
 
         this.preferences = preferences;
         this.requirements = requirements;
-        this.rc=rc
-        this.currentLevel=""
+        this.radar_chart = radar_chart;
+        
+        this.current_level = "";
+
         this.selection = {
             "country": null,
             "municipality": null,
@@ -20,7 +22,6 @@ export class Map {
         }
 
         this.prepare();
-        // callback();
     }
 
     prepare() {
@@ -91,7 +92,7 @@ export class Map {
     }
 
     deselect() {
-        // console.log(this.selection)
+        
         var render_required = false;
     
         if (this.selection.neighbourhood) {
@@ -178,7 +179,8 @@ export class Map {
 
     render_objects(geo_data, geo_objects, objects) {
         
-        this.renderRadarMap(objects);
+        this.render_radar_map(objects);
+
         const object_map = {};
         for (const object of objects) {
             object_map[object.code] = object;
@@ -247,26 +249,20 @@ export class Map {
         this.focus(data);
     }
 
-    renderRadarMap(objects){
-        // console.log(this.currentLevel)
+    render_radar_map(objects){
         if(this.currentLevel!=='l1'){
-            const radarvalues=objects.reduce((a, b) => (
-                {
-                  price: (a.price + b.price)/objects.length,
-                  urbanity: (a.urbanity + b.urbanity)/objects.length,
-                  healthcare: (a.healthcare + b.healthcare)/objects.length,
-                  education: (a.education + b.education)/objects.length,
-                  public_transport: (a.public_transport + b.public_transport)/objects.length
-                }
-              ));
-            //   console.log(radarvalues)
-            
-            this.rc.setData(Object.values(radarvalues))
-            this.rc.draw();
-        }
-        else{
-            this.rc.setData([0,0,0,0,0]);
-            this.rc.draw();
+            const radar_values = objects.reduce((a, b) => ({
+                  price: (a.price + b.price) / objects.length,
+                  urbanity: (a.urbanity + b.urbanity) / objects.length,
+                  healthcare: (a.healthcare + b.healthcare) / objects.length,
+                  education: (a.education + b.education) / objects.length,
+                  public_transport: (a.public_transport + b.public_transport) / objects.length
+            }));
+            this.radar_chart.set_data(Object.values(radar_values))
+            this.radar_chart.draw();
+        } else{
+            this.radar_chart.set_data([0,0,0,0,0]);
+            this.radar_chart.draw();
         }
       }
 
@@ -339,19 +335,3 @@ function select_objects(geo_objects, selected) {
         geometries: geo_objects.geometries.filter(geometry => selected.includes(geometry.id))
     }
 }
-
-function select_object(geo_objects, identifier) {
-    return {
-        type: geo_objects.type,
-        geometries: [geo_objects.geometries.find(geometry => geometry.id == identifier)]
-    }
-}
-function calculateAggregate(arr) {
-    arr.forEach(function(el) {
-      var key = el.id;
-      obj[key] = obj[key] || { count: 0, total: 0, avg: 0 };
-      obj[key].count++;
-      obj[key].total += el.val;
-      obj[key].avg = obj[key].total / obj[key].count;
-    });
-  }
