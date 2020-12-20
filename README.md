@@ -1,4 +1,4 @@
-# Data Visualisation
+# Location Seeker
 
 The report and presentation can be found in the `doc` directory. The web-application can be found in the `public` folder. And the data collection and pre-processing script can be found in `scripts`. Please, follow the below instruction for collecting and pre-processing the data such that they are placed in the correct directory.
 
