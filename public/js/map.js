@@ -120,19 +120,19 @@ export class Map {
     render() {
         if (this.selection.neighbourhood) {
             this.render_neighbourhood(this.selection.district, this.selection.neighbourhood);
-            this.currentLevel="l4";
+            this.current_level = "l4";
 
         } else if (this.selection.district) {
             this.render_group(this.selection.district, "neighbourhoods");
-            this.currentLevel="l3";
+            this.current_level = "l3";
 
         } else if (this.selection.municipality) {
             this.render_group(this.selection.municipality, "districts");
-            this.currentLevel="l2";
+            this.current_level = "l2";
 
         } else if (this.selection.country) {
             this.render_group(this.selection.country, "municipalities");
-            this.currentLevel="l1";
+            this.current_level = "l1";
         }
     }
 
@@ -250,7 +250,7 @@ export class Map {
     }
 
     render_radar_map(objects){
-        if(this.currentLevel!=='l1'){
+        if(this.current_level !== "l1"){
             const radar_values = objects.reduce((a, b) => ({
                   price: (a.price + b.price) / objects.length,
                   urbanity: (a.urbanity + b.urbanity) / objects.length,
