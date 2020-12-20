@@ -10,7 +10,6 @@
     <script src="https://d3js.org/d3.v6.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 </head>
 <body>
     <div id="map"></div>
@@ -57,11 +56,13 @@
             "library": false,
         }
 
-        // radar map
+        // Create radar chart
         
         import {Radar} from "./js/radar.js";
         const rc = new Radar();
 
+
+        // Create chloropleth map
 
         import {Map} from "./js/map.js";
         const map = new Map(preferences, requirements,rc);
